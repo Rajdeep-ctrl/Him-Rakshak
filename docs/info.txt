@@ -1,0 +1,7 @@
+1.The deployment of the project is done in 3 parts:
+    1. Frontend  - Vercel
+    2. Backend -  Render
+    3. Database - PostgreSQL via Supabase
+
+2. Version Control - Git and Github
+

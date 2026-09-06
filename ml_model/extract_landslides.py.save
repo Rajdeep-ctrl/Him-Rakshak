@@ -1,0 +1,111 @@
+import csv
+import re
+from pathlib import Path
+
+
+INPUT_FILE = Path("/tmp/landslides.txt")
+OUTPUT_FILE = Path("data/processed/himachal_landslides.csv")
+
+
+def is_record_start(line):
+    """Check whether a line starts with a landslide record number."""
+    return bool(re.match(r"^\s*\d+\s+HP/", line))
+
+
+def parse_record(line):
+    """
+    Parse one extracted GSI record.
+
+    The important fields are identified from the right side because
+    Slide_Name and NH_SH_Location can contain spaces.
+    """
+    line = line.strip()
+
+    match = re.match(
+        r"^(\d+)\s+(HP/\S+)\s+Himachal Pradesh\s+(.*?)"
+        r"\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+"
+        r"(.+?)\s+(Slide|Fall|Flow|Topple|Subsidence|Complex)\s+(\S+)\s*$",
+        line,
+        re.IGNORECASE,
+    )
+
+    if not match:
+        return None
+
+    sl_no = match.group(1)
+    slide_no = match.group(2)
+    middle = match.group(3).strip()
+    latitude = match.group(4)
+    longitude = match.group(5)
+    material = match.group(6).strip()
+    movement = match.group(7).strip()
+    history = match.group(8).strip()
+
+    # District is the first word after "Himachal Pradesh".
+    parts = middle.split(None, 1)
+
+    if len(parts) == 2:
+        district = parts[0]
+        location_text = parts[1]
+    elif len(parts) == 1:
+        district = parts[0]
+        location_text = ""
+    else:
+        district = ""
+        location_text = ""
+
+    return [
+        sl_no,
+        slide_no,
+        district,
+        location_text,
+        latitude,
+        longitude,
+        material,
+        movement,
+        history,
+    ]
+
+
+def main():
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    records = []
+    failed = 0
+
+    with INPUT_FILE.open("r", encoding="utf-8", errors="ignore") as file:
+        for line in file:
+            if not is_record_start(line):
+                continue
+
+            record = parse_record(line)
+
+            if record:
+                records.append(record)
+            else:
+                failed += 1
+
+    with OUTPUT_FILE.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+
+        writer.writerow([
+            "Sl_No",
+            "Slide_No",
+            "District",
+            "Location",
+            "Latitude",
+            "Longitude",
+            "Material_Involved",
+            "Movement",
+            "History",
+        ])
+
+        writer.writerows(records)
+
+    print(f"Records extracted: {len(records)}")
+    print(f"Records not parsed: {failed}")
+    print(f"Output file: {OUTPUT_FILE}")
+
+
+if __name__ == "__main__":
+    main()

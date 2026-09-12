@@ -22,10 +22,9 @@ if not DATABASE_URL:
         "database/ folder with: DATABASE_URL=your_supabase_connection_string"
     )
 
-# Create the SQLAlchemy engine (this manages the actual connection pool)
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
-# Session factory - used to talk to the DB safely
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -49,9 +48,7 @@ def test_connection():
         print(f"Connection failed: {e}")
 
 
-# ----------------------------------------------------------------------
-# Helper functions (used by the backend API routes)
-# ----------------------------------------------------------------------
+
 
 def insert_risk_prediction(db, data: dict):
     """Insert a new risk-prediction record. `data` should match the
@@ -121,6 +118,4 @@ def log_alert(db, data: dict):
 
 
 if __name__ == "__main__":
-    # Run this file directly to test your database connection:
-    #   python connection.py
     test_connection()

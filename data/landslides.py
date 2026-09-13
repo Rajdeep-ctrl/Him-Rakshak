@@ -43,7 +43,7 @@ def download_full_catalog(url: str = CSV_URL, save_path: str = RAW_PATH):
     with open(save_path, "wb") as f:
         f.write(response.content)
 
-    print(f"✅ Downloaded full catalog to {save_path} ({len(response.content) / 1024:.1f} KB)")
+    print(f" Downloaded full catalog to {save_path} ({len(response.content) / 1024:.1f} KB)")
     return save_path
 
 
@@ -71,8 +71,8 @@ def filter_to_ner(csv_path: str = RAW_PATH, output_path: str = NER_FILTERED_PATH
     ].copy()
 
     ner_df.to_csv(output_path, index=False)
-    print(f"✅ Found {len(ner_df)} records within the NER bounding box")
-    print(f"✅ Saved filtered dataset to {output_path}")
+    print(f" Found {len(ner_df)} records within the NER bounding box")
+    print(f" Saved filtered dataset to {output_path}")
     return ner_df
 
 

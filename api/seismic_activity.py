@@ -38,7 +38,7 @@ def get_recent_earthquakes(lat: float, lon: float, radius_km: float = 300,
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"⚠️ USGS API error: {e}")
+        print(f" USGS API error: {e}")
         return None
 
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     # Original narrower test (what the ML model will actually use)
     result = get_seismic_risk_factor(lat, lon)
-    print(f"✅ Seismic summary (last 30 days, 300km radius):")
+    print(f"   Seismic summary (last 30 days, 300km radius):")
     print(f"   Max magnitude: {result['max_magnitude']}")
     print(f"   Nearest earthquake distance: {result['nearest_distance_km']} km")
     print(f"   Number of quakes: {result['count']}")

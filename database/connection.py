@@ -7,12 +7,16 @@ risk_predictions, field_reports, alerts_log, road_status.
 """
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-# Load DATABASE_URL from .env file
-load_dotenv()
+# Load DATABASE_URL from .env file - use an explicit path so this works
+# no matter which folder the script is run FROM (e.g. project root vs
+# database/ folder vs backend/ folder).
+ENV_PATH = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=ENV_PATH)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -22,9 +26,10 @@ if not DATABASE_URL:
         "database/ folder with: DATABASE_URL=your_supabase_connection_string"
     )
 
+# Create the SQLAlchemy engine (this manages the actual connection pool)
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
-
+# Session factory - used to talk to the DB safely
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -43,12 +48,14 @@ def test_connection():
         with engine.connect() as conn:
             result = conn.execute(text("SELECT NOW();"))
             row = result.fetchone()
-            print(f"Connected successfully! Server time: {row[0]}")
+            print(f"✅ Connected successfully! Server time: {row[0]}")
     except Exception as e:
-        print(f"Connection failed: {e}")
+        print(f"❌ Connection failed: {e}")
 
 
-
+# ----------------------------------------------------------------------
+# Helper functions (used by the backend API routes)
+# ----------------------------------------------------------------------
 
 def insert_risk_prediction(db, data: dict):
     """Insert a new risk-prediction record. `data` should match the
@@ -118,4 +125,6 @@ def log_alert(db, data: dict):
 
 
 if __name__ == "__main__":
+    # Run this file directly to test your database connection:
+    #   python connection.py
     test_connection()

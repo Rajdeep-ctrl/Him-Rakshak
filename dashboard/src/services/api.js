@@ -9,8 +9,17 @@ import {
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
-async function fetchWithFallback(endpoint, mockData, isLiveApi) {
-  if (!isLiveApi) {
+// Helper to get persistent mode selection (Defaults to LIVE if not set)
+const isLiveApiSelected = () => {
+  const savedMode = localStorage.getItem('app_data_mode');
+  return savedMode ? savedMode === 'LIVE' : true;
+};
+
+async function fetchWithFallback(endpoint, mockData, isLiveApiOverride) {
+  // Check parameter override, otherwise fallback to localStorage setting
+  const isLive = isLiveApiOverride !== undefined ? isLiveApiOverride : isLiveApiSelected();
+
+  if (!isLive) {
     // Artificial latency simulation for realistic UI behavior
     await new Promise((res) => setTimeout(res, 300));
     return mockData;
@@ -24,30 +33,54 @@ async function fetchWithFallback(endpoint, mockData, isLiveApi) {
     return await response.json();
   } catch (err) {
     console.warn(`Live API call to ${endpoint} failed. Switched fallback mode.`, err);
-    throw err;
+    return mockData; // Gracefully fallback to mock data on error
   }
 }
 
-export const getRiskZones = (isLiveApi = false) =>
+export const getRiskZones = (isLiveApi) =>
   fetchWithFallback('/risk-zones', MOCK_RISK_ZONES, isLiveApi);
 
-export const getAlerts = (isLiveApi = false) =>
+export const getAlerts = (isLiveApi) =>
   fetchWithFallback('/alerts', MOCK_ALERTS, isLiveApi);
 
-export const getRoads = (isLiveApi = false) =>
+export const getRoads = (isLiveApi) =>
   fetchWithFallback('/roads', MOCK_ROADS, isLiveApi);
 
-export const getReports = (isLiveApi = false) =>
+export const getReports = (isLiveApi) =>
   fetchWithFallback('/reports', MOCK_REPORTS, isLiveApi);
 
-export const getRainfallTrend = (isLiveApi = false) =>
+export const getRainfallTrend = (isLiveApi) =>
   fetchWithFallback('/analytics/rainfall-trend', MOCK_RAINFALL_TREND, isLiveApi);
 
-export const getStateRiskAnalytics = (isLiveApi = false) =>
+export const getStateRiskAnalytics = (isLiveApi) =>
   fetchWithFallback('/analytics/state-risk', MOCK_ANALYTICS_STATE_RISK, isLiveApi);
 
-export const submitReportApi = async (formData, isLiveApi = false) => {
-  if (!isLiveApi) {
+// Open-Meteo Weather API Integration (Free API, No Key Needed)
+export async function getWeatherByCoords(lat, lng) {
+  try {
+    const response = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&hourly=relativehumidity_2m`
+    );
+    if (!response.ok) {
+      throw new Error('Weather API request failed');
+    }
+    const data = await response.json();
+    return {
+      temp: data.current_weather.temperature,
+      windspeed: data.current_weather.windspeed,
+      weathercode: data.current_weather.weathercode,
+      humidity: data.hourly?.relativehumidity_2m[0] ?? 65,
+    };
+  } catch (error) {
+    console.error('Weather fetch error:', error);
+    return null;
+  }
+}
+
+export const submitReportApi = async (formData, isLiveApiOverride) => {
+  const isLive = isLiveApiOverride !== undefined ? isLiveApiOverride : isLiveApiSelected();
+
+  if (!isLive) {
     await new Promise((res) => setTimeout(res, 800));
     const newReport = {
       id: `HR-2026-${Math.floor(10000 + Math.random() * 90000)}`,

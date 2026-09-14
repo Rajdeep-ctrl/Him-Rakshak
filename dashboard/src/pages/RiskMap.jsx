@@ -1,78 +1,111 @@
 import React, { useState, useEffect } from 'react';
-import { getRiskZones } from '../services/api';
-import { useDataMode } from '../context/DataModeContext';
 import LandslideMap from '../components/map/LandslideMap';
-import SkeletonLoader from '../components/common/SkeletonLoader';
-import { Filter, Search } from 'lucide-react';
+import { getRiskZones } from '../services/api';
+import { Search, Filter, Loader2 } from 'lucide-react';
 
-export default function RiskMap() {
-  const { isLiveApi } = useDataMode();
+export default function RiskMapPage() {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterRisk, setFilterRisk] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterRisk, setFilterRisk] = useState('ALL');
+
+  // Load locations from service (handles both MOCK & LIVE API persistent mode)
+  const fetchLocations = async () => {
+    setLoading(true);
+    try {
+      const data = await getRiskZones();
+      setLocations(data || []);
+    } catch (err) {
+      console.error('Failed to load risk zones:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        const res = await getRiskZones(isLiveApi);
-        setLocations(res);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, [isLiveApi]);
+    // Initial fetch
+    fetchLocations();
 
-  const searchedLocations = locations.filter((loc) =>
-    loc.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    loc.state.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    // Listen for mode changes triggered from Topbar
+    const handleModeChange = () => {
+      fetchLocations();
+    };
+
+    window.addEventListener('dataModeChanged', handleModeChange);
+    return () => {
+      window.removeEventListener('dataModeChanged', handleModeChange);
+    };
+  }, []);
+
+  // Real-time Filtering based on Search Input & Selected Risk Level
+  const filteredLocations = locations.filter((item) => {
+    const matchesSearch =
+      (item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.district && item.district.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.state && item.state.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesRisk =
+      filterRisk === 'ALL' ||
+      (item.riskLevel && item.riskLevel.toUpperCase() === filterRisk.toUpperCase());
+
+    return matchesSearch && matchesRisk;
+  });
 
   return (
-    <div className="p-4 lg:p-8 space-y-4 max-w-[1600px] mx-auto h-[calc(100vh-5rem)] flex flex-col">
-      {/* Search & Filter Top Bar */}
-      <div className="bg-command-surface p-4 rounded-xl border border-command-border flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3 flex-1 min-w-[260px]">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-command-muted absolute left-3 top-3" />
-            <input
-              type="text"
-              placeholder="Search District or State (e.g. Dima Hasao, Assam)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-command-bg border border-command-border rounded-lg pl-9 pr-4 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
-            />
-          </div>
+    <div className="p-4 space-y-4 h-[calc(100vh-80px)] flex flex-col bg-slate-950">
+      {/* Top Action Bar with Search & Filter Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 p-3 rounded-xl border border-slate-800">
+        <div>
+          <h1 className="text-base font-bold text-white">GIS Landslide Surveillance Map</h1>
+          <p className="text-xs text-slate-400">Search and filter active risk sectors across NER</p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-command-muted" />
-          <span className="text-xs text-command-muted font-medium">Risk Severity:</span>
-          <select
-            value={filterRisk}
-            onChange={(e) => setFilterRisk(e.target.value)}
-            className="bg-command-bg border border-command-border text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-cyan-500 cursor-pointer"
-          >
-            <option value="ALL">All Risk Levels</option>
-            <option value="CRITICAL">Critical Only</option>
-            <option value="HIGH">High Only</option>
-            <option value="MEDIUM">Medium Only</option>
-            <option value="LOW">Low Only</option>
-          </select>
+        <div className="flex items-center gap-3">
+          {/* SEARCH BAR */}
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search district, state, location..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-1.5 bg-slate-800 text-white text-xs rounded-lg border border-slate-700 focus:outline-none focus:border-cyan-500 w-64"
+            />
+          </div>
+
+          {/* RISK FILTER */}
+          <div className="flex items-center gap-1.5 bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs">
+            <Filter className="w-3.5 h-3.5 text-slate-400 ml-1" />
+            <select
+              value={filterRisk}
+              onChange={(e) => setFilterRisk(e.target.value)}
+              className="bg-transparent text-white focus:outline-none cursor-pointer pr-2"
+            >
+              <option value="ALL" className="bg-slate-900">All Risks</option>
+              <option value="CRITICAL" className="bg-slate-900">Critical</option>
+              <option value="HIGH" className="bg-slate-900">High</option>
+              <option value="MEDIUM" className="bg-slate-900">Medium</option>
+              <option value="LOW" className="bg-slate-900">Low</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Map Window */}
-      <div className="flex-1 w-full relative">
-        {loading ? (
-          <SkeletonLoader type="map" />
-        ) : (
-          <LandslideMap locations={searchedLocations} filterRisk={filterRisk} />
+      {/* MAP CONTAINER */}
+      <div className="relative flex-1 rounded-xl overflow-hidden border border-slate-800">
+        {loading && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
+            <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Updating Map Layers...</span>
+            </div>
+          </div>
         )}
+        <LandslideMap
+          locations={filteredLocations}
+          searchQuery={searchQuery}
+          filterRisk={filterRisk}
+        />
       </div>
     </div>
   );

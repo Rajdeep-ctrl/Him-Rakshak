@@ -5,6 +5,7 @@ import { DataModeProvider } from './context/DataModeContext';
 import Sidebar from './components/layout/Sidebar';
 import Topbar from './components/layout/Topbar';
 import Toast from './components/common/Toast';
+import VoiceAssistantModal from './components/common/VoiceAssistantModal';
 
 // Pages
 import Login from './pages/Login';
@@ -18,15 +19,21 @@ import Settings from './pages/Settings';
 
 function Layout({ children, title }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex">
       <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
-        <Topbar title={title} setMobileOpen={setMobileOpen} />
+        <Topbar 
+          title={title} 
+          setMobileOpen={setMobileOpen} 
+          onOpenVoice={() => setIsVoiceOpen(true)} 
+        />
         <main className="flex-1">{children}</main>
       </div>
       <Toast />
+      <VoiceAssistantModal isOpen={isVoiceOpen} onClose={() => setIsVoiceOpen(false)} />
     </div>
   );
 }

@@ -48,9 +48,9 @@ def test_connection():
         with engine.connect() as conn:
             result = conn.execute(text("SELECT NOW();"))
             row = result.fetchone()
-            print(f"✅ Connected successfully! Server time: {row[0]}")
+            print(f" Connected successfully! Server time: {row[0]}")
     except Exception as e:
-        print(f"❌ Connection failed: {e}")
+        print(f" Connection failed: {e}")
 
 
 # ----------------------------------------------------------------------

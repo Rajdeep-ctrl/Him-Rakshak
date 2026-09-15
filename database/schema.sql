@@ -60,6 +60,20 @@ CREATE TABLE road_status (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+
+CREATE TABLE IF NOT EXISTS local_contacts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    district TEXT NOT NULL,          -- e.g., 'East Khasi Hills', 'Kamrup', 'Champhai'
+    village_or_zone TEXT NOT NULL,   -- e.g., 'Mawsynram', 'Nongstoin'
+    language_pref TEXT DEFAULT 'en', -- 'en', 'as' (Assamese), 'bn' (Bengali), 'hi' (Hindi)
+    role TEXT DEFAULT 'citizen',     -- 'citizen', 'field_officer', 'sdma_nodal'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for fast regional lookup during sudden flash alerts
+CREATE INDEX IF NOT EXISTS idx_contacts_zone ON local_contacts (village_or_zone, district);
 -- ============================================================
 -- Quick sanity check: run this after creating tables
 -- ============================================================

@@ -73,10 +73,24 @@ except Exception as exc:
 
 try:
     HISTORICAL_DF = historical_data.load_dataset()
-    print(f"✅ Loaded {len(HISTORICAL_DF)} historical records")
+    print(f"✅ Loaded {len(HISTORICAL_DF)} historical records (NASA catalog, used for /predict context)")
 except Exception as exc:
     HISTORICAL_DF = pd.DataFrame()
     print(f"⚠️ Historical data unavailable: {exc}")
+
+# The team's own extracted-and-engineered dataset (2059 real NER landslide
+# records + generated negative samples, with State/Latitude/Longitude/
+# slope_deg/rainfall_mm/soil_moisture_mm/label columns). This is what the
+# ML model was actually TRAINED on, and is what the dashboard's map and
+# analytics endpoints (get_ner_data, risk_zones, state_risk, rainfall_trend)
+# need - NOT the smaller NASA catalog above.
+TRAINING_DATA_PATH = os.path.join(ROOT_DIR, "data", "processed", "training_data_final .csv")
+try:
+    TRAINING_DF = pd.read_csv(TRAINING_DATA_PATH)
+    print(f"✅ Loaded {len(TRAINING_DF)} training records for dashboard from {TRAINING_DATA_PATH}")
+except Exception as exc:
+    TRAINING_DF = pd.DataFrame()
+    print(f"⚠️ Training dataset unavailable at {TRAINING_DATA_PATH}: {exc}")
 
 
 class PredictRequest(BaseModel):
@@ -155,13 +169,13 @@ def display_risk(value: Any) -> str:
 
 
 def get_ner_data() -> pd.DataFrame:
-    if HISTORICAL_DF is None or HISTORICAL_DF.empty:
+    if TRAINING_DF is None or TRAINING_DF.empty:
         return pd.DataFrame()
 
-    if "State" not in HISTORICAL_DF.columns:
-        return HISTORICAL_DF.copy()
+    if "State" not in TRAINING_DF.columns:
+        return TRAINING_DF.copy()
 
-    data = HISTORICAL_DF.copy()
+    data = TRAINING_DF.copy()
     data["_state_normalised"] = data["State"].apply(
         normalise_state
     )
@@ -205,18 +219,17 @@ def build_features_and_predict(
     rainfall_mm = max(safe_float(rainfall_mm), 0.0)
     slope_deg = max(safe_float(slope_deg), 0.0)
 
-    ner_data = get_ner_data()
     historical_count = 0
     nearest_distance_km = 100.0
 
-    if not ner_data.empty:
+    if HISTORICAL_DF is not None and not HISTORICAL_DF.empty:
         try:
             historical_count = (
                 historical_data.get_historical_count_near(
                     latitude,
                     longitude,
                     radius_km=50,
-                    df=ner_data,
+                    df=HISTORICAL_DF,
                 )
             )
 
@@ -224,7 +237,7 @@ def build_features_and_predict(
                 historical_data.get_nearest_historical_distance_km(
                     latitude,
                     longitude,
-                    df=ner_data,
+                    df=HISTORICAL_DF,
                 )
                 or 100.0
             )

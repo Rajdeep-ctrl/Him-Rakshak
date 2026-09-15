@@ -661,6 +661,44 @@ def roads():
     return []
 
 
+@app.get("/api/satellite-image")
+def satellite_image(latitude: float = Query(...), longitude: float = Query(...),
+                     half_width_deg: float = Query(0.5, description="Zoom level - smaller = closer zoom")):
+    """
+    Returns a ready-to-use NASA satellite image URL for a given location.
+    This does NOT download/process anything server-side - it just builds
+    the URL. The frontend puts this directly in an <img src="..."> tag,
+    so NASA's server handles the actual image loading (fast, no added
+    latency to this endpoint or to /predict).
+    """
+    from datetime import datetime, timedelta, timezone
+
+    min_lon = longitude - half_width_deg
+    max_lon = longitude + half_width_deg
+    min_lat = latitude - half_width_deg
+    max_lat = latitude + half_width_deg
+    bbox = f"{min_lon},{min_lat},{max_lon},{max_lat}"
+
+    # Use yesterday's date (today's imagery often isn't processed yet)
+    date = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    image_url = (
+        "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi"
+        "?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap"
+        "&LAYERS=MODIS_Terra_CorrectedReflectance_TrueColor"
+        "&STYLES=&FORMAT=image/jpeg&TRANSPARENT=false"
+        "&HEIGHT=512&WIDTH=512&SRS=EPSG:4326"
+        f"&BBOX={bbox}&TIME={date}"
+    )
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "date": date,
+        "image_url": image_url,
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
 

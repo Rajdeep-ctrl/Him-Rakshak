@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { LanguageProvider } from './context/LanguageContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { DataModeProvider } from './context/DataModeContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Sidebar from './components/layout/Sidebar';
@@ -39,11 +39,11 @@ function Layout({ children, title }) {
   );
 }
 
-export default function App() {
+function AppContent() {
+  const { t } = useLanguage();
+
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <DataModeProvider>
+    <DataModeProvider>
           <BrowserRouter>
             <Routes>
             <Route path="/login" element={<Login />} />
@@ -51,7 +51,7 @@ export default function App() {
             <Route
               path="/dashboard"
               element={
-                <Layout title="Regional Risk Command Overview">
+                <Layout title={t('regionalOverview')}>
                   <Dashboard />
                 </Layout>
               }
@@ -60,7 +60,7 @@ export default function App() {
             <Route
               path="/risk-map"
               element={
-                <Layout title="GIS Landslide Surveillance Map">
+                <Layout title={t('gisSurveillance')}>
                   <RiskMap />
                 </Layout>
               }
@@ -69,7 +69,7 @@ export default function App() {
             <Route
               path="/alerts"
               element={
-                <Layout title="Early Warning Incident Control Center">
+                <Layout title={t('earlyWarningCenter')}>
                   <Alerts />
                 </Layout>
               }
@@ -78,7 +78,7 @@ export default function App() {
             <Route
               path="/roads"
               element={
-                <Layout title="Highway Corridor Vulnerability Monitoring">
+                <Layout title={t('highwayMonitoring')}>
                   <Roads />
                 </Layout>
               }
@@ -87,7 +87,7 @@ export default function App() {
             <Route
               path="/reports"
               element={
-                <Layout title="Field Hazard Reporting System">
+                <Layout title={t('citizenReports')}>
                   <Reports />
                 </Layout>
               }
@@ -96,7 +96,7 @@ export default function App() {
             <Route
               path="/analytics"
               element={
-                <Layout title="Predictive Risk Analytics">
+                <Layout title={t('predictiveAnalytics')}>
                   <Analytics />
                 </Layout>
               }
@@ -105,7 +105,7 @@ export default function App() {
             <Route
               path="/settings"
               element={
-                <Layout title="Command System Settings">
+                <Layout title={t('systemSettings')}>
                   <Settings />
                 </Layout>
               }
@@ -114,7 +114,15 @@ export default function App() {
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </BrowserRouter>
-        </DataModeProvider>
+    </DataModeProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <LanguageProvider>
+        <AppContent />
       </LanguageProvider>
     </ThemeProvider>
   );

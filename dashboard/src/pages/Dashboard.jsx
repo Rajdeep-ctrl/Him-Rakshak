@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { getRiskZones, getAlerts, getRainfallTrend } from '../services/api';
+import { getRiskZones, getAlerts, getRainfallTrend, getRoads } from '../services/api';
 import { useDataMode } from '../context/DataModeContext';
+import { useLanguage } from '../context/LanguageContext';
 import LandslideMap from '../components/map/LandslideMap';
 import DosAndDontsModal from '../components/common/DosAndDontsModal';
 import SkeletonLoader from '../components/common/SkeletonLoader';
@@ -30,25 +31,28 @@ import {
 
 export default function Dashboard() {
   const { isLiveApi } = useDataMode();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [rainfallData, setRainfallData] = useState([]);
+  const [roads, setRoads] = useState([]);
   const [activeKpiModal, setActiveKpiModal] = useState(null);
 
   useEffect(() => {
     async function loadDashboardData() {
       setLoading(true);
       try {
-        const [locRes, altRes, rainRes] = await Promise.all([
+        const [locRes, altRes, rainRes, roadsRes] = await Promise.all([
           getRiskZones(isLiveApi),
           getAlerts(isLiveApi),
           getRainfallTrend(isLiveApi),
+          getRoads(isLiveApi),
         ]);
         setLocations(locRes || []);
         
-        // Ensure altRes is valid array and has default items if empty
-        const activeAlerts = altRes && altRes.length > 0 ? altRes : [
+        // Keep live alert feeds empty when the API has no active alerts.
+        const activeAlerts = altRes && altRes.length > 0 ? altRes : (isLiveApi ? [] : [
           {
             id: 'ALT-2026-091',
             title: 'Impending Mudslide Hazard — NH-27 Corridor',
@@ -67,10 +71,11 @@ export default function Dashboard() {
             timestamp: '28 minutes ago',
             description: 'Rapid increase in pore water pressure detected. Slope velocity 4.2 mm/hr.',
           },
-        ];
+        ]);
         
         setAlerts(activeAlerts);
         setRainfallData(rainRes || []);
+        setRoads(roadsRes || []);
 
         if ((locRes && locRes.some((l) => l.riskLevel === 'CRITICAL')) || activeAlerts.length > 0) {
           playAlertSound();
@@ -95,6 +100,21 @@ export default function Dashboard() {
 
   const criticalLocations = locations.filter((l) => l.riskLevel === 'CRITICAL');
   const highLocations = locations.filter((l) => l.riskLevel === 'HIGH');
+  const vulnerableRoads = roads.filter((road) => road.status !== 'OPEN');
+  const rainfallObservations = [...locations]
+    .map((location) => ({
+      ...location,
+      rainfall24h: Number(location.rainfall24h ?? location.rainfall_24h_mm ?? location.rainfall_mm ?? location.rainfall),
+    }))
+    .filter((location) => Number.isFinite(location.rainfall24h))
+    .sort((left, right) => right.rainfall24h - left.rainfall24h)
+    .slice(0, 3);
+  const trendMaximum = [...rainfallData]
+    .map((item) => Number(item.rainfall ?? item.rainfall_24h_mm))
+    .filter(Number.isFinite)
+    .sort((left, right) => right - left)[0];
+  const maxRainfallLocation = rainfallObservations[0];
+  const maxRainfallValue = maxRainfallLocation?.rainfall24h ?? trendMaximum ?? 0;
 
   // Case-insensitive filtering for Critical alerts in the feed
   const criticalAlerts = alerts.filter(
@@ -107,39 +127,29 @@ export default function Dashboard() {
       setActiveKpiModal({
         title: 'Critical Risk Zones (>85% Soil Saturation)',
         type: 'critical',
-        items: criticalLocations.length > 0 ? criticalLocations : [
-          { name: 'Dima Hasao (Haflong Sector)', state: 'Assam', value: '94% Risk' },
-          { name: 'Shillong Bypass', state: 'Meghalaya', value: '88% Risk' },
-        ]
+        items: criticalLocations
       });
     } else if (type === 'high') {
       setActiveKpiModal({
         title: 'High Risk Zones (70% - 85% Saturation)',
         type: 'high',
-        items: highLocations.length > 0 ? highLocations : [
-          { name: 'Guwahati South Hills', state: 'Assam', value: '78% Risk' },
-          { name: 'Kohima Highway Stretch', state: 'Nagaland', value: '74% Risk' },
-        ]
+        items: highLocations
       });
     } else if (type === 'rainfall') {
       setActiveKpiModal({
         title: '24-Hour Max Rainfall Observations',
         type: 'rainfall',
-        items: [
-          { name: 'Haflong Weather Station', state: 'Assam', value: '168 mm' },
-          { name: 'Cherrapunji Observatory', state: 'Meghalaya', value: '152 mm' },
-          { name: 'Mawsynram Station', state: 'Meghalaya', value: '145 mm' }
-        ]
+        items: rainfallObservations.map((location) => ({
+          ...location,
+          name: location.district || 'Regional observation',
+          value: `${location.rainfall24h} mm`,
+        }))
       });
     } else if (type === 'roads') {
       setActiveKpiModal({
         title: 'Vulnerable & Blocked Road Arteries',
         type: 'roads',
-        items: [
-          { name: 'NH-27 Highway', state: 'Assam', value: '80% Blocked (Mudslide)' },
-          { name: 'NH-29 Corridor', state: 'Nagaland', value: 'Single-Lane Only' },
-          { name: 'Shillong-Jowai Road', state: 'Meghalaya', value: 'High Debris Flow Risk' }
-        ]
+        items: roads,
       });
     }
   };
@@ -155,8 +165,8 @@ export default function Dashboard() {
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">Critical Risk Zones</p>
-              <h3 className="mt-3 text-3xl font-black text-[var(--danger)]">{criticalLocations.length || 2}</h3>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">{t('criticalZones')}</p>
+              <h3 className="mt-3 text-3xl font-black text-[var(--danger)]">{criticalLocations.length}</h3>
               <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-[var(--danger)]">
                 <ArrowUpRight className="h-3 w-3" /> +2 elevated in last 6 hrs
               </p>
@@ -174,8 +184,8 @@ export default function Dashboard() {
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">High Risk Zones</p>
-              <h3 className="mt-3 text-3xl font-black text-[var(--warning)]">{highLocations.length || 5}</h3>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">{t('highRiskZones')}</p>
+              <h3 className="mt-3 text-3xl font-black text-[var(--warning)]">{highLocations.length}</h3>
               <p className="mt-2 text-[11px] font-semibold text-[var(--warning)]">Sustained moisture build-up</p>
             </div>
             <div className="rounded-2xl border border-[var(--warning)]/20 bg-[var(--warning-soft)] p-3 text-[var(--warning)] transition group-hover:scale-105">
@@ -191,11 +201,13 @@ export default function Dashboard() {
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">24h Max Rainfall</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">{t('rainfall24h')}</p>
               <h3 className="mt-3 text-3xl font-black text-[var(--accent)]">
-                168 <span className="text-base font-bold">mm</span>
+                {maxRainfallValue} <span className="text-base font-bold">mm</span>
               </h3>
-              <p className="mt-2 text-[11px] font-semibold text-[var(--success)]">Dima Hasao Sector</p>
+              <p className="mt-2 text-[11px] font-semibold text-[var(--success)]">
+                {maxRainfallLocation?.district || (trendMaximum != null ? 'Regional observation' : 'No live observation')}
+              </p>
             </div>
             <div className="rounded-2xl border border-[var(--success)]/20 bg-[var(--success-soft)] p-3 text-[var(--success)] transition group-hover:scale-105">
               <CloudRain className="h-6 w-6" />
@@ -210,9 +222,11 @@ export default function Dashboard() {
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">Vulnerable Roads</p>
-              <h3 className="mt-3 text-3xl font-black text-[var(--amber)]">3 Stretches</h3>
-              <p className="mt-2 text-[11px] font-semibold text-[var(--amber)]">NH-27 & NH-29 Blocked</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">{t('vulnerableRoads')}</p>
+              <h3 className="mt-3 text-3xl font-black text-[var(--amber)]">{vulnerableRoads.length} Stretches</h3>
+              <p className="mt-2 text-[11px] font-semibold text-[var(--amber)]">
+                {vulnerableRoads.length > 0 ? `${vulnerableRoads.length} ${t('requireAttention')}` : t('allCorridorsOpen')}
+              </p>
             </div>
             <div className="rounded-2xl border border-[var(--amber)]/20 bg-[var(--amber-soft)] p-3 text-[var(--amber)] transition group-hover:scale-105">
               <Truck className="h-6 w-6" />
@@ -225,7 +239,7 @@ export default function Dashboard() {
       <div className="space-y-3">
         <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.14em] text-[var(--text)]">
           <CloudRain className="h-4 w-4 text-[var(--success)]" />
-          Live Weather & Environmental Statistics
+          {t('liveWeatherStats')}
         </h2>
         <WeatherStatsGrid />
       </div>
@@ -235,9 +249,9 @@ export default function Dashboard() {
           <div className="mb-3 px-2">
             <h2 className="flex items-center gap-2 text-base font-black tracking-[0.06em] text-[var(--text)]">
               <Activity className="h-4 w-4 text-[var(--success)]" />
-              Live GIS Landslide Risk Surveillance
+              {t('liveGisSurveillance')}
             </h2>
-            <p className="mt-1 text-xs font-medium text-[var(--muted)]">North Eastern Region Command View</p>
+            <p className="mt-1 text-xs font-medium text-[var(--muted)]">{t('regionalCommandView')}</p>
           </div>
           <div className="flex-1 overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--panel-alt)]">
             <LandslideMap locations={locations} />
@@ -249,7 +263,7 @@ export default function Dashboard() {
             <div className="mb-4 flex items-center justify-between border-b border-[var(--border)] pb-3">
               <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.14em] text-[var(--text)]">
                 <ShieldAlert className="h-4 w-4 text-[var(--danger)]" />
-                Critical Alerts Feed
+                {t('criticalAlertFeed')}
               </h2>
               <span className="rounded-full border border-[var(--danger)]/20 bg-[var(--danger-soft)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[var(--danger)]">
                 {criticalAlerts.length} Active
@@ -302,7 +316,7 @@ export default function Dashboard() {
         <div className="mb-4">
           <h3 className="flex items-center gap-2 text-base font-black tracking-[0.06em] text-[var(--text)]">
             <TrendingUp className="h-4 w-4 text-[var(--success)]" />
-            Regional 24-Hour Rainfall Trend vs Critical Risk Threshold
+            {t('rainfallTrend')}
           </h3>
           <p className="mt-1 text-xs font-medium text-[var(--muted)]">Cumulative precipitation data across high-risk sectors</p>
         </div>

@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import LandslideMap from '../components/map/LandslideMap';
 import { getRiskZones } from '../services/api';
 import { Search, Filter, Loader2 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function RiskMapPage() {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRisk, setFilterRisk] = useState('ALL');
+  const { t } = useLanguage();
 
   // Load locations from service (handles both MOCK & LIVE API persistent mode)
   const fetchLocations = async () => {
@@ -55,7 +57,7 @@ export default function RiskMapPage() {
     <div className="flex h-[calc(100vh-88px)] flex-col gap-4 p-1 sm:p-2">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[var(--border)] bg-[var(--panel)] p-4 shadow-[var(--shadow-card)]">
         <div>
-          <h1 className="text-lg font-black tracking-[0.06em] text-[var(--text)]">GIS Surveillance Map</h1>
+          <h1 className="text-lg font-black tracking-[0.06em] text-[var(--text)]">{t('riskMap')}</h1>
           <p className="mt-1 text-xs font-medium text-[var(--muted)]">Search and filter active risk sectors across the North East region</p>
         </div>
 

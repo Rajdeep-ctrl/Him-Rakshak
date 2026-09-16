@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const translations = {
   en: {
@@ -28,6 +28,31 @@ const translations = {
     submitReport: "Report a Hazard",
     useLocation: "Acquire Geolocation",
     uploadMedia: "Drag & Drop Hazard Media",
+    regionalOverview: "Regional Risk Command Overview",
+    gisSurveillance: "GIS Landslide Surveillance Map",
+    earlyWarningCenter: "Early Warning Incident Control Center",
+    highwayMonitoring: "Highway Corridor Vulnerability Monitoring",
+    predictiveAnalytics: "Predictive Risk Analytics",
+    citizenReports: "Field Hazard Reporting System",
+    systemSettings: "Command System Settings",
+    notifications: "Notifications",
+    unreadAlerts: "unread alerts",
+    markAllRead: "Mark all read",
+    allRead: "All read",
+    loadingAlerts: "Loading live alerts...",
+    unableLoadAlerts: "Unable to load live alerts.",
+    allCaughtUp: "All caught up",
+    noUnreadAlerts: "No unread alerts.",
+    openAlertManagement: "Open alert management",
+    liveAlerts: "Live alerts",
+    criticalAlertFeed: "Critical Alerts Feed",
+    liveWeatherStats: "Live Weather & Environmental Statistics",
+    liveGisSurveillance: "Live GIS Landslide Risk Surveillance",
+    regionalCommandView: "North Eastern Region Command View",
+    rainfallTrend: "Regional 24-Hour Rainfall Trend vs Critical Risk Threshold",
+    vulnerableRoads: "Vulnerable Roads",
+    requireAttention: "require attention",
+    allCorridorsOpen: "All monitored corridors open",
   },
   hi: {
     appName: "हिम-रक्षक",
@@ -56,6 +81,31 @@ const translations = {
     submitReport: "खतरे की रिपोर्ट करें",
     useLocation: "भू-स्थान प्राप्त करें",
     uploadMedia: "मीडिया फ़ाइल अपलोड करें",
+    regionalOverview: "क्षेत्रीय जोखिम कमांड अवलोकन",
+    gisSurveillance: "जीआईएस भूस्खलन निगरानी मानचित्र",
+    earlyWarningCenter: "प्रारंभिक चेतावनी घटना नियंत्रण केंद्र",
+    highwayMonitoring: "राजमार्ग भेद्यता निगरानी",
+    predictiveAnalytics: "पूर्वानुमान विश्लेषिकी",
+    citizenReports: "क्षेत्रीय खतरा रिपोर्ट प्रणाली",
+    systemSettings: "कमांड सिस्टम सेटिंग्स",
+    notifications: "सूचनाएँ",
+    unreadAlerts: "अपठित चेतावनियाँ",
+    markAllRead: "सभी को पढ़ा हुआ चिह्नित करें",
+    allRead: "सभी पढ़े गए",
+    loadingAlerts: "लाइव चेतावनियाँ लोड हो रही हैं...",
+    unableLoadAlerts: "लाइव चेतावनियाँ लोड नहीं हो सकीं।",
+    allCaughtUp: "सब कुछ देख लिया गया",
+    noUnreadAlerts: "कोई अपठित चेतावनी नहीं।",
+    openAlertManagement: "चेतावनी प्रबंधन खोलें",
+    liveAlerts: "लाइव चेतावनियाँ",
+    criticalAlertFeed: "गंभीर चेतावनी सूची",
+    liveWeatherStats: "लाइव मौसम और पर्यावरण आँकड़े",
+    liveGisSurveillance: "लाइव जीआईएस भूस्खलन जोखिम निगरानी",
+    regionalCommandView: "उत्तर-पूर्वी क्षेत्र कमांड अवलोकन",
+    rainfallTrend: "क्षेत्रीय 24 घंटे वर्षा प्रवृत्ति बनाम गंभीर जोखिम सीमा",
+    vulnerableRoads: "जोखिम वाली सड़कें",
+    requireAttention: "ध्यान देने की आवश्यकता",
+    allCorridorsOpen: "सभी निगरानी मार्ग खुले हैं",
   },
   as: {
     appName: "হিম-ৰক্ষক",
@@ -84,13 +134,42 @@ const translations = {
     submitReport: "আপদৰ প্ৰতিবেদন দিয়ক",
     useLocation: "ভূ-অৱস্থান লাভ কৰক",
     uploadMedia: "মিডিয়া ফাইল আপলোড কৰক",
+    regionalOverview: "আঞ্চলিক বিপদাশংকা কমাণ্ড অৱলোকন",
+    gisSurveillance: "জি.আই.এছ. ভূমিস্খলন নিৰীক্ষণ মানচিত্ৰ",
+    earlyWarningCenter: "আগতীয়া সকীয়ানি ঘটনা নিয়ন্ত্ৰণ কেন্দ্ৰ",
+    highwayMonitoring: "ঘাইপথ দুৰ্বলতা নিৰীক্ষণ",
+    predictiveAnalytics: "পূৰ্বানুমান বিশ্লেষণ",
+    citizenReports: "ক্ষেত্ৰ বিপদ প্ৰতিবেদন ব্যৱস্থা",
+    systemSettings: "কমাণ্ড ব্যৱস্থা সংৰূপ",
+    notifications: "সকীয়ানি",
+    unreadAlerts: "নপঢ়া সকীয়ানি",
+    markAllRead: "সকলো পঢ়া বুলি চিহ্নিত কৰক",
+    allRead: "সকলো পঢ়া হৈছে",
+    loadingAlerts: "লাইভ সকীয়ানি লোড হৈ আছে...",
+    unableLoadAlerts: "লাইভ সকীয়ানি লোড কৰিব পৰা নগ'ল।",
+    allCaughtUp: "সকলো আপডেট পোৱা গৈছে",
+    noUnreadAlerts: "নপঢ়া সকীয়ানি নাই।",
+    openAlertManagement: "সকীয়ানি ব্যৱস্থাপনা খোলক",
+    liveAlerts: "লাইভ সকীয়ানি",
+    criticalAlertFeed: "সংকটজনক সকীয়ানি তালিকা",
+    liveWeatherStats: "লাইভ বতৰ আৰু পৰিৱেশ পৰিসংখ্যা",
+    liveGisSurveillance: "লাইভ জি.আই.এছ. ভূমিস্খলন বিপদাশংকা নিৰীক্ষণ",
+    regionalCommandView: "উত্তৰ-পূৰ্বাঞ্চল কমাণ্ড অৱলোকন",
+    rainfallTrend: "আঞ্চলিক ২৪ ঘণ্টাৰ বৰষুণৰ ধাৰা বনাম সংকট সীমা",
+    vulnerableRoads: "বিপদাপন্ন পথসমূহ",
+    requireAttention: "মনোযোগৰ প্ৰয়োজন",
+    allCorridorsOpen: "সকলো নিৰীক্ষিত পথ খোলা",
   }
 };
 
 const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-  const [lang, setLang] = useState('en');
+  const [lang, setLang] = useState(() => window.localStorage.getItem('him-rakshak-language') || 'en');
+
+  useEffect(() => {
+    window.localStorage.setItem('him-rakshak-language', lang);
+  }, [lang]);
 
   const t = (key) => translations[lang][key] || translations['en'][key] || key;
 

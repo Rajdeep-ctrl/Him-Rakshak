@@ -6,6 +6,9 @@ export default function LocationDrawer({ location, onClose }) {
 
   const isCritical = location.riskLevel === 'CRITICAL';
   const isHigh = location.riskLevel === 'HIGH';
+  const features = Array.isArray(location.features) ? location.features : [];
+  const summary = location.summary || 'Live risk indicators are being evaluated for this location.';
+  const recommendedAction = location.recommendedAction || 'Follow local disaster-management instructions for this risk level.';
 
   return (
     <div className="fixed inset-y-0 right-0 z-50 flex w-full flex-col justify-between overflow-y-auto border-l border-[var(--border)] bg-[var(--panel)] p-6 shadow-[var(--shadow-soft)] backdrop-blur-xl sm:w-[450px]">
@@ -74,7 +77,7 @@ export default function LocationDrawer({ location, onClose }) {
             AI Feature Contribution Factors
           </h3>
           <div className="space-y-3">
-            {location.features.map((feat, idx) => (
+            {features.length > 0 ? features.map((feat, idx) => (
               <div key={idx}>
                 <div className="mb-1 flex justify-between text-xs">
                   <span className="text-[var(--muted)]">{feat.name}</span>
@@ -87,7 +90,9 @@ export default function LocationDrawer({ location, onClose }) {
                   ></div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p className="text-xs text-[var(--muted)]">No feature breakdown is available for this location yet.</p>
+            )}
           </div>
           <p className="mt-3 text-[10px] italic text-[var(--muted)]">
             *Prototype AI Feature Weight Analysis based on historical slope failure data.
@@ -97,7 +102,7 @@ export default function LocationDrawer({ location, onClose }) {
         <div className="mb-6">
           <h4 className="mb-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--text)]">Situational Assessment</h4>
           <p className="rounded-[18px] border border-[var(--border)] bg-[var(--panel-alt)] p-3 text-sm leading-relaxed text-[var(--muted)]">
-            {location.summary}
+            {summary}
           </p>
         </div>
 
@@ -107,7 +112,7 @@ export default function LocationDrawer({ location, onClose }) {
             <span>Recommended Response Action</span>
           </div>
           <p className="text-xs leading-relaxed text-[var(--warning)]/90">
-            {location.recommendedAction}
+            {recommendedAction}
           </p>
         </div>
       </div>

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useDataMode } from '../context/DataModeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Settings as SettingsIcon, Server, Shield, Radio, RefreshCw } from 'lucide-react';
 
 export default function Settings() {
   const { isLiveApi, toggleDataMode, addToast } = useDataMode();
+  const { t } = useLanguage();
   const [apiUrl, setApiUrl] = useState('http://localhost:8000/api');
   const [autoRefresh, setAutoRefresh] = useState(true);
 
@@ -17,7 +19,7 @@ export default function Settings() {
       <div className="rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[var(--shadow-card)]">
         <h1 className="flex items-center gap-2 text-xl font-black tracking-[0.06em] text-[var(--text)]">
           <SettingsIcon className="h-5 w-5 text-[var(--accent)]" />
-          Command System Configuration
+          {t('settings')}
         </h1>
         <p className="mt-2 text-xs font-medium text-[var(--muted)]">
           Adjust API connectors, auto-refresh intervals, and system parameters

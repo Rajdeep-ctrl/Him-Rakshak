@@ -15,6 +15,7 @@ import {
   Volume2,
   VolumeX
 } from 'lucide-react';
+import { getWeatherByPlace } from '../../services/api';
 
 export default function WeatherAIChatbot() {
   const [messages, setMessages] = useState([
@@ -101,11 +102,42 @@ export default function WeatherAIChatbot() {
   const quickPrompts = [
     'What is the weather in Shillong today?',
     'Will it rain in Guwahati this evening?',
-    'Is it safe to drive through Dima Hasao?',
-    'Show current UV index and humidity.',
+    'How do I report a hazard?',
+    'How do I use the GIS risk map?',
   ];
 
-  const handleSendMessage = (textToSend) => {
+  const getWebsiteGuidance = (query) => {
+    const lowerQuery = query.toLowerCase();
+
+    if (lowerQuery.includes('report') || lowerQuery.includes('submit')) {
+      return 'To report a hazard, open Citizen Hazard Reports from the sidebar. Select the hazard type, enter the location and coordinates, describe the situation, optionally upload photo or video evidence, then select Submit Report.';
+    }
+    if (lowerQuery.includes('map') || lowerQuery.includes('gis') || lowerQuery.includes('risk zone')) {
+      return 'Open GIS Risk Map from the sidebar. Search by district or state, filter by Critical, High, Medium, or Low risk, then select a map marker and choose Inspect Risk Factors for live rainfall, slope, soil, and weather details.';
+    }
+    if (lowerQuery.includes('alert') || lowerQuery.includes('notification') || lowerQuery.includes('bell')) {
+      return 'Use the notification bell in the top bar to view live alerts. Unread alerts show a red indicator. Select Mark all read to acknowledge every unread alert and close the panel, or open Alert Management for Inspect, Acknowledge, Resolve, and Broadcast actions.';
+    }
+    if (lowerQuery.includes('road') || lowerQuery.includes('highway')) {
+      return 'Open Road Monitoring from the sidebar to view live corridor status, risk level, condition, and the latest API update. Use the search box to find a state or corridor.';
+    }
+    if (lowerQuery.includes('analytic') || lowerQuery.includes('predict')) {
+      return 'Open Predictive Analytics to compare live Critical, High, Medium, and Low risk totals by state. The bar chart and regional proportions are calculated from the API dataset.';
+    }
+    if (lowerQuery.includes('language') || lowerQuery.includes('hindi') || lowerQuery.includes('assam')) {
+      return 'Use the language selector in the top bar to switch between English, Hindi, and Assamese. The selection is saved automatically.';
+    }
+    if (lowerQuery.includes('live') || lowerQuery.includes('mock') || lowerQuery.includes('data mode')) {
+      return 'Use the Live API and Mock buttons in the top bar. Live API loads the backend and external weather services; Mock uses local demonstration data.';
+    }
+    if (lowerQuery.includes('what can you') || lowerQuery.includes('help') || lowerQuery.includes('website')) {
+      return 'I can fetch live weather for any place and guide you through hazard reports, the GIS risk map, notifications, alerts, road monitoring, predictive analytics, language selection, and Live API mode.';
+    }
+
+    return null;
+  };
+
+  const handleSendMessage = async (textToSend) => {
     const query = textToSend || input;
     if (!query.trim()) return;
 
@@ -117,52 +149,63 @@ export default function WeatherAIChatbot() {
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    if (!textToSend) setInput('');
+    setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      let botResponse = {
+    try {
+      const guidance = getWebsiteGuidance(query);
+      if (guidance) {
+        const botResponse = {
+          id: Date.now() + 1,
+          sender: 'bot',
+          text: guidance,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          weatherCard: null,
+        };
+        setMessages((prev) => [...prev, botResponse]);
+        setIsTyping(false);
+        speakText(botResponse.id, botResponse.text);
+        return;
+      }
+
+      const placeMatch = query.match(/\b(?:in|at|for|near|of)\s+(.+?)(?:\s+(?:today|tomorrow|now|currently|this evening|tonight))?\s*[?!.]*$/i);
+      const place = placeMatch?.[1] || query
+        .replace(/\b(what is|what's|how is|how's|tell me|show|give me|the|current|live|weather|temperature|forecast|today|now|rain|raining|wind|humidity|uv index|safe|to drive|in|at|for|near)\b/gi, ' ')
+        .replace(/[?!.]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const weather = await getWeatherByPlace(place);
+      const botResponse = {
         id: Date.now() + 1,
         sender: 'bot',
-        text: "I'm monitoring the atmospheric data for your query.",
+        text: `Live weather for ${weather.location}: ${weather.condition}, ${weather.temperature}°C. Rainfall today is ${weather.dailyRainfall} mm with a ${weather.precipitationProbability}% chance of precipitation.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        weatherCard: null,
+        weatherCard: {
+          location: weather.location,
+          temp: `${weather.temperature}°C`,
+          condition: weather.condition,
+          humidity: `${weather.humidity}%`,
+          wind: `${weather.windSpeed} km/h`,
+          uv: `${weather.uvIndex}`,
+        },
       };
-
-      const lowerQuery = query.toLowerCase();
-
-      if (lowerQuery.includes('shillong')) {
-        botResponse.text = "Here is the current weather summary for Shillong. Heavy precipitation has been recorded over the last 6 hours.";
-        botResponse.weatherCard = {
-          location: 'Shillong, Meghalaya',
-          temp: '18°C',
-          condition: 'Heavy Rain & Fog',
-          humidity: '88%',
-          wind: '16 km/h',
-          uv: '3 Low',
-        };
-      } else if (lowerQuery.includes('guwahati') || lowerQuery.includes('rain')) {
-        botResponse.text = "Moderate to heavy showers are expected around Guwahati starting from 6:30 PM today. Cumulative rainfall may hit 45mm.";
-        botResponse.weatherCard = {
-          location: 'Guwahati, Assam',
-          temp: '27°C',
-          condition: 'Thunderstorms Expected',
-          humidity: '82%',
-          wind: '22 km/h',
-          uv: '5 Moderate',
-        };
-      } else if (lowerQuery.includes('drive') || lowerQuery.includes('safe') || lowerQuery.includes('dima hasao')) {
-        botResponse.text = "Travel Warning: NH-27 stretch near Dima Hasao is under elevated risk for localized landslides due to sustained soil moisture.";
-      } else {
-        botResponse.text = `Analysis completed for "${query}". Environmental levels are stable with moderate cloud cover and light winds.`;
-      }
 
       setMessages((prev) => [...prev, botResponse]);
       setIsTyping(false);
 
       // Automatically speak the response aloud
       speakText(botResponse.id, botResponse.text);
-    }, 1200);
+    } catch (error) {
+      const botResponse = {
+        id: Date.now() + 1,
+        sender: 'bot',
+        text: error.message || 'Live weather data is temporarily unavailable.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        weatherCard: null,
+      };
+      setMessages((prev) => [...prev, botResponse]);
+      setIsTyping(false);
+    }
   };
 
   return (

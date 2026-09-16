@@ -29,6 +29,7 @@ from connection import (
     get_recent_predictions,
     insert_field_report,
     insert_risk_prediction,
+    log_alert,
 )
 from notification_service import broadcast_regional_sms, send_single_sms, send_emergency_email
 
@@ -42,6 +43,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -167,6 +169,20 @@ def is_high_risk(value: Any) -> bool:
 
 def display_risk(value: Any) -> str:
     return "High" if is_high_risk(value) else "Low"
+
+
+def display_dataset_risk(row: Any) -> str:
+    """Assign a visible severity to an engineered dataset observation."""
+    label = row.get("label", 0)
+    if not is_high_risk(label):
+        return "Low"
+
+    rainfall = safe_float(row.get("rainfall_mm"))
+    slope = safe_float(row.get("slope_deg"))
+    if rainfall >= 35 or slope >= 20:
+        return "Critical"
+
+    return "High"
 
 
 def get_ner_data() -> pd.DataFrame:
@@ -504,7 +520,14 @@ def risk_zones(
     if not result:
         data = get_ner_data()
 
-        for index, row in data.head(limit).iterrows():
+        # The engineered dataset is ordered by label, so head(limit) would
+        # expose only positive samples and make the map look uniformly high risk.
+        sample = data.sample(
+            n=min(limit, len(data)),
+            random_state=42,
+        )
+
+        for index, row in sample.iterrows():
             latitude = row.get("Latitude")
             longitude = row.get("Longitude")
 
@@ -521,7 +544,7 @@ def risk_zones(
                     "longitude": safe_float(longitude),
                     "lat": safe_float(latitude),
                     "lng": safe_float(longitude),
-                    "risk_level": display_risk(label),
+                    "risk_level": display_dataset_risk(row),
                     "label": safe_float(label),
                     "slope_deg": safe_float(
                         row.get("slope_deg")
@@ -562,6 +585,34 @@ def alerts(
                         "Risk detected near "
                         f"{item.get('location_name', 'NER location')}"
                     ),
+                }
+            )
+
+    if len(result) < limit:
+        data = get_ner_data()
+        sample = data.sample(
+            n=min(limit - len(result), len(data)),
+            random_state=42,
+        )
+
+        for index, row in sample.iterrows():
+            risk = display_dataset_risk(row)
+            result.append(
+                {
+                    "id": f"ZONE-{index}",
+                    "state": str(row.get("State", "NER")),
+                    "district": str(row.get("State", "Regional")),
+                    "latitude": safe_float(row.get("Latitude")),
+                    "longitude": safe_float(row.get("Longitude")),
+                    "severity": risk.upper(),
+                    "title": f"{risk} Landslide Risk Zone",
+                    "message": "Live risk zone generated from the engineered landslide dataset.",
+                    "description": (
+                        f"Rainfall: {safe_float(row.get('rainfall_mm')):.1f} mm; "
+                        f"slope: {safe_float(row.get('slope_deg')):.1f} degrees."
+                    ),
+                    "rainfall": safe_float(row.get("rainfall_mm")),
+                    "status": "ACTIVE" if risk in {"Critical", "High"} else "MONITORING",
                 }
             )
 
@@ -628,14 +679,9 @@ def state_risk():
     result = []
 
     for state, group in data.groupby("State"):
-        high_count = 0
-
-        if "label" in group.columns:
-            high_count = sum(
-                is_high_risk(value)
-                for value in group["label"]
-            )
-
+        risk_levels = [display_dataset_risk(row) for _, row in group.iterrows()]
+        critical_count = risk_levels.count("Critical")
+        high_count = risk_levels.count("High")
         total = len(group)
 
         result.append(
@@ -643,9 +689,9 @@ def state_risk():
                 "state": str(state),
                 "total": total,
                 "high": high_count,
-                "critical": high_count,
+                "critical": critical_count,
                 "medium": 0,
-                "low": total - high_count,
+                "low": risk_levels.count("Low"),
             }
         )
 
@@ -659,13 +705,70 @@ def dashboard_reports(db: Session = Depends(get_db)):
 
 @app.get("/api/roads")
 def roads():
-    return []
+    data = get_ner_data()
+    if data.empty or "State" not in data.columns:
+        return []
+
+    roads = []
+    status_by_risk = {
+        "Critical": "BLOCKED",
+        "High": "AT RISK",
+        "Low": "OPEN",
+    }
+
+    for state, group in data.groupby("State"):
+        observations = [
+            (display_dataset_risk(row), row)
+            for _, row in group.iterrows()
+        ]
+        risk_counts = {
+            level: sum(item_risk == level for item_risk, _ in observations)
+            for level in ("Critical", "High", "Low")
+        }
+        vulnerable_count = risk_counts["Critical"] + risk_counts["High"]
+        critical_share = risk_counts["Critical"] / len(observations)
+        if critical_share >= 0.1:
+            risk = "Critical"
+        elif vulnerable_count >= risk_counts["Low"]:
+            risk = "High"
+        else:
+            risk = "Low"
+        observation = next(
+            row for item_risk, row in observations if item_risk == risk
+        )
+        rainfall = safe_float(observation.get("rainfall_mm"))
+        slope = safe_float(observation.get("slope_deg"))
+
+        roads.append(
+            {
+                "id": f"ROAD-{normalise_state(state).replace(' ', '-')}",
+                "name": f"{state} monitored highway network",
+                "stretch": "Live risk corridor observations",
+                "state": str(state),
+                "status": status_by_risk[risk],
+                "riskLevel": risk.upper(),
+                "lastUpdate": "Live API",
+                "cause": (
+                    f"{risk} risk observation from {rainfall:.1f} mm rainfall "
+                    f"and {slope:.1f} degree slope conditions."
+                ),
+            }
+        )
+
+    return roads
 
 class AlertBroadcastRequest(BaseModel):
     location: str
     district: str
     severity: str
     description: str = ""
+
+
+class AlertActionRequest(BaseModel):
+    alert_id: str
+    action: str
+    severity: str = "LOW"
+    location: Optional[str] = None
 
 
 @app.post("/api/alerts/broadcast-sms")
@@ -687,6 +790,36 @@ def trigger_manual_broadcast(payload: AlertBroadcastRequest):
         "status": "broadcast_complete",
         "sms_details": sms_results,
         "email_details": email_result,
+    }
+
+
+@app.post("/api/alerts/action")
+def record_alert_action(
+    payload: AlertActionRequest,
+    db: Session = Depends(get_db),
+):
+    action = payload.action.strip().lower()
+    allowed_actions = {"acknowledged", "assigned response force", "resolved"}
+    if action not in allowed_actions:
+        raise HTTPException(status_code=400, detail="Unsupported alert action")
+
+    log_alert(
+        db,
+        {
+            "risk_prediction_id": int(payload.alert_id) if payload.alert_id.isdigit() else None,
+            "location_name": payload.location or payload.alert_id,
+            "risk_level": payload.severity.upper(),
+            "message": f"Alert {payload.alert_id} marked {action}",
+            "language": "en",
+            "alert_channel": "dashboard",
+            "sent_status": action,
+        },
+    )
+
+    return {
+        "status": "recorded",
+        "alert_id": payload.alert_id,
+        "action": action,
     }
 
 @app.get("/api/satellite-image")

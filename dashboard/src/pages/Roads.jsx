@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { getRoads } from '../services/api';
 import { useDataMode } from '../context/DataModeContext';
+import { useLanguage } from '../context/LanguageContext';
 import SkeletonLoader from '../components/common/SkeletonLoader';
 import { Truck, AlertTriangle, CheckCircle, Search } from 'lucide-react';
 
 export default function Roads() {
   const { isLiveApi } = useDataMode();
+  const { t } = useLanguage();
   const [roads, setRoads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -37,11 +39,18 @@ export default function Roads() {
         <div>
           <h1 className="flex items-center gap-2 text-xl font-black tracking-[0.06em] text-[var(--text)]">
             <Truck className="h-5 w-5 text-[var(--amber)]" />
-            Critical Highway & Road Arteries
+            {t('highwayMonitoring')}
           </h1>
           <p className="mt-2 text-xs font-medium text-[var(--muted)]">
             Status of vital transport corridors across the North Eastern hill states
           </p>
+          <span className={`mt-3 inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${
+            isLiveApi
+              ? 'border-[var(--success)]/20 bg-[var(--success-soft)] text-[var(--success)]'
+              : 'border-[var(--border)] bg-[var(--panel-alt)] text-[var(--muted)]'
+          }`}>
+            {isLiveApi ? 'Live API' : 'Mock data'}
+          </span>
         </div>
 
         <div className="relative min-w-[260px]">

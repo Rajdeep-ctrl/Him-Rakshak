@@ -3,10 +3,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const DataModeContext = createContext();
 
 export const DataModeProvider = ({ children }) => {
-  // Read initial saved state from localStorage (Defaults to MOCK if not set, or set to your preference)
+  // Read initial saved state from localStorage; live API is the default.
   const [isLiveApi, setIsLiveApi] = useState(() => {
     const saved = localStorage.getItem('app_data_mode');
-    return saved ? saved === 'LIVE' : false;
+    return saved ? saved === 'LIVE' : true;
   });
   const [apiError, setApiError] = useState(null);
   const [toasts, setToasts] = useState([]);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getStateRiskAnalytics } from '../services/api';
 import { useDataMode } from '../context/DataModeContext';
+import { useLanguage } from '../context/LanguageContext';
 import SkeletonLoader from '../components/common/SkeletonLoader';
 import { BarChart3, PieChart as PieIcon, Shield } from 'lucide-react';
 import {
@@ -20,6 +21,7 @@ const RISK_COLORS = ['#EF4444', '#F97316', '#F59E0B', '#10B981'];
 
 export default function Analytics() {
   const { isLiveApi } = useDataMode();
+  const { t } = useLanguage();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,10 +41,10 @@ export default function Analytics() {
   }, [isLiveApi]);
 
   const pieData = [
-    { name: 'Critical Risk', value: 7 },
-    { name: 'High Risk', value: 18 },
-    { name: 'Medium Risk', value: 24 },
-    { name: 'Low Risk', value: 12 },
+    { name: 'Critical Risk', value: data.reduce((total, item) => total + Number(item.critical || 0), 0) },
+    { name: 'High Risk', value: data.reduce((total, item) => total + Number(item.high || 0), 0) },
+    { name: 'Medium Risk', value: data.reduce((total, item) => total + Number(item.medium || 0), 0) },
+    { name: 'Low Risk', value: data.reduce((total, item) => total + Number(item.low || 0), 0) },
   ];
 
   if (loading) return <div className="p-8"><SkeletonLoader type="card" count={2} /></div>;
@@ -52,7 +54,7 @@ export default function Analytics() {
       <div className="rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[var(--shadow-card)]">
         <h1 className="flex items-center gap-2 text-xl font-black tracking-[0.06em] text-[var(--text)]">
           <BarChart3 className="h-5 w-5 text-[var(--accent)]" />
-          North Eastern Regional Landslide Risk Analytics
+          {t('predictiveAnalytics')}
         </h1>
         <p className="mt-2 text-xs font-medium text-[var(--muted)]">
           State-level risk distribution, historical density, and predictive metrics

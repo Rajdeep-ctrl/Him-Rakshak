@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { getAlerts, broadcastEmergencyAlert } from '../services/api';
+import { getAlerts, broadcastEmergencyAlert, recordAlertAction } from '../services/api';
 import { useDataMode } from '../context/DataModeContext';
+import { useLanguage } from '../context/LanguageContext';
 import AlertModal from '../components/alerts/AlertModal';
 import SkeletonLoader from '../components/common/SkeletonLoader';
 import { Bell, Filter, ShieldAlert, CheckCircle, Send, Loader2 } from 'lucide-react';
 
 export default function Alerts() {
   const { isLiveApi, addToast } = useDataMode();
+  const { t } = useLanguage();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterSeverity, setFilterSeverity] = useState('ALL');
@@ -28,13 +30,22 @@ export default function Alerts() {
     loadAlerts();
   }, [isLiveApi]);
 
-  const handleAction = (alertId, actionType) => {
-    setAlerts((prev) =>
-      prev.map((alt) =>
-        alt.id === alertId ? { ...alt, status: actionType.toUpperCase() } : alt
-      )
-    );
-    addToast(`Alert ${alertId} updated to ${actionType}`, 'success');
+  const handleAction = async (alertId, actionType) => {
+    const alert = alerts.find((item) => item.id === alertId);
+    try {
+      if (isLiveApi && alert) {
+        await recordAlertAction(alert, actionType);
+      }
+      setAlerts((prev) =>
+        prev.map((alt) =>
+          alt.id === alertId ? { ...alt, status: actionType.toUpperCase() } : alt
+        )
+      );
+      addToast(`Alert ${alertId} updated to ${actionType}`, 'success');
+    } catch (err) {
+      console.error(err);
+      addToast('Could not save alert action to the live API.', 'error');
+    }
   };
 
   const handleBroadcast = async (alert) => {
@@ -66,7 +77,7 @@ export default function Alerts() {
         <div>
           <h1 className="flex items-center gap-2 text-xl font-black tracking-[0.06em] text-[var(--text)]">
             <Bell className="h-5 w-5 text-[var(--danger)]" />
-            Early Warning Incident Control Center
+            {t('earlyWarningCenter')}
           </h1>
           <p className="mt-1 text-xs font-medium text-[var(--muted)]">
             Real-time landslide triggers and field dispatch management

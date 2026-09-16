@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { getReports, submitReportApi } from '../services/api';
 import { useDataMode } from '../context/DataModeContext';
+import { useLanguage } from '../context/LanguageContext';
 import SkeletonLoader from '../components/common/SkeletonLoader';
 import { FileText, MapPin, Upload, CheckCircle, Image as ImageIcon, Video, AlertCircle } from 'lucide-react';
 
 export default function Reports() {
   const { isLiveApi, addToast } = useDataMode();
+  const { t } = useLanguage();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -87,7 +89,7 @@ export default function Reports() {
       <div className="rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[var(--shadow-card)]">
         <h2 className="flex items-center gap-2 text-xl font-black tracking-[0.06em] text-[var(--text)]">
           <FileText className="h-5 w-5 text-[var(--accent)]" />
-          Field & Citizen Hazard Report
+          {t('reports')}
         </h2>
         <p className="mt-2 text-xs font-medium text-[var(--muted)]">
           Submit ground-level observations to enrich AI prediction models and emergency dispatch
@@ -215,7 +217,7 @@ export default function Reports() {
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-xl font-black tracking-[0.06em] text-[var(--text)]">Recent Submitted Field Reports</h3>
+        <h3 className="text-xl font-black tracking-[0.06em] text-[var(--text)]">{t('hazardReports')}</h3>
         {loading ? (
           <SkeletonLoader type="table" count={2} />
         ) : (

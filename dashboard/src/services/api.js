@@ -289,8 +289,12 @@ export const broadcastEmergencyAlert = async (alertData = {}) => {
     location: alertData.location || "Mawsynram Sector",
     district: alertData.district || "East Khasi Hills",
     severity: alertData.severity || "CRITICAL",
-    description: alertData.description || "Continuous heavy rainfall triggering steep slope destabilization."
+    description: alertData.description || "Continuous heavy rainfall triggering steep slope destabilization.",
   };
+
+  if (alertData.recipientEmail) {
+    payload.recipient_email = alertData.recipientEmail;
+  }
 
   const response = await fetch(`${BASE_URL}/alerts/broadcast-sms`, {
     method: "POST",

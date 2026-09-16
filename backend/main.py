@@ -118,14 +118,6 @@ class FieldReportRequest(BaseModel):
     report_type: str = "crack"
 
 
-class AlertBroadcastRequest(BaseModel):
-    location: str
-    district: str = "NER Sector"
-    severity: str = "CRITICAL"
-    description: str = "Landslide hazard detected. Follow local disaster-management instructions."
-    recipient_email: Optional[str] = None
-
-
 def safe_float(value: Any, default: float = 0.0) -> float:
     try:
         return float(value)
@@ -490,7 +482,6 @@ def recent_predictions(
 
 
 @app.post("/reports")
-@app.post("/api/reports")
 def submit_report(
     report: FieldReportRequest,
     db: Session = Depends(get_db),
@@ -585,6 +576,18 @@ def risk_zones(
 
             label = row.get("label", 0)
 
+            historical_count = 0
+            if not HISTORICAL_DF.empty:
+                try:
+                    historical_count = historical_data.get_historical_count_near(
+                        safe_float(latitude),
+                        safe_float(longitude),
+                        radius_km=50,
+                        df=HISTORICAL_DF,
+                    )
+                except Exception as exc:
+                    print(f"⚠️ Historical density lookup failed: {exc}")
+
             result.append(
                 {
                     "id": str(index),
@@ -601,6 +604,7 @@ def risk_zones(
                     "rainfall_mm": safe_float(
                         row.get("rainfall_mm")
                     ),
+                    "historical_landslide_count": int(historical_count),
                     "soil_moisture_mm": safe_float(
                         row.get("soil_moisture_mm")
                     ),
@@ -883,59 +887,6 @@ def roads():
         )
 
     return roads
-
-
-@app.post("/api/alerts/broadcast-sms")
-def broadcast_alert(
-    payload: AlertBroadcastRequest,
-    db: Session = Depends(get_db),
-):
-    """Dispatch an emergency alert through the configured SMS and email services."""
-    alert = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
-    alert["severity"] = alert["severity"].upper()
-
-    try:
-        sms_results = notification_service.broadcast_regional_sms(
-            contacts=[],
-            alert=alert,
-        )
-        email_result = notification_service.send_emergency_email(
-            subject=f"{alert['severity']} Landslide Risk - {alert['location']}",
-            message_body=(
-                f"{alert['description']} Location: {alert['location']}, "
-                f"{alert['district']}."
-            ),
-            recipient=alert.get("recipient_email"),
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Alert dispatch failed: {exc}") from exc
-
-    channel_statuses = [result.get("status") for result in sms_results]
-    channel_statuses.append(email_result.get("status"))
-    delivered = any(status in {"delivered", "simulated"} for status in channel_statuses)
-
-    try:
-        log_alert(
-            db,
-            {
-                "risk_prediction_id": None,
-                "location_name": alert["location"],
-                "risk_level": alert["severity"],
-                "message": alert["description"],
-                "language": "en",
-                "alert_channel": "sms,email",
-                "sent_status": "delivered" if delivered else "failed",
-            },
-        )
-    except Exception as exc:
-        print(f"⚠️ Alert dispatch log failed: {exc}")
-
-    return {
-        "status": "dispatched" if delivered else "failed",
-        "alert_sent": delivered,
-        "sms_results": sms_results,
-        "email_details": email_result,
-    }
 
 class AlertActionRequest(BaseModel):
     alert_id: str

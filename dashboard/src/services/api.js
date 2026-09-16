@@ -22,28 +22,39 @@ const toNumber = (value, fallback = 0) => {
 
 const clampPercent = (value) => Math.round(Math.min(Math.max(toNumber(value), 0), 100));
 
-const normaliseRiskZone = (item) => ({
-  ...item,
-  id: item.id ?? `${item.latitude ?? item.lat}-${item.longitude ?? item.lng}`,
-  lat: toNumber(item.lat ?? item.latitude),
-  lng: toNumber(item.lng ?? item.longitude),
-  latitude: toNumber(item.latitude ?? item.lat),
-  longitude: toNumber(item.longitude ?? item.lng),
-  riskLevel: String(item.riskLevel ?? item.risk_level ?? 'LOW').toUpperCase(),
-  aiConfidence: clampPercent(item.aiConfidence ?? (item.confidence != null ? item.confidence * 100 : String(item.riskLevel ?? item.risk_level).toUpperCase() === 'HIGH' ? 75 : 25)),
-  rainfall24h: toNumber(item.rainfall24h ?? item.rainfall_24h_mm ?? item.rainfall_mm),
-  slope: toNumber(item.slope ?? item.slope_deg),
-  soilSaturation: toNumber(item.soilSaturation ?? (item.soil_moisture_index != null ? item.soil_moisture_index * 100 : item.soil_moisture_mm * 100)),
-  historicalLandslides: toNumber(item.historicalLandslides ?? item.historical_landslide_count),
-  features: item.features ?? [
-    { name: '24h Rainfall Intensity', weight: clampPercent(toNumber(item.rainfall24h ?? item.rainfall_24h_mm ?? item.rainfall_mm) / 2) },
-    { name: 'Terrain Slope Angle', weight: clampPercent(toNumber(item.slope ?? item.slope_deg) * 2.5) },
-    { name: 'Soil Saturation Index', weight: clampPercent(toNumber(item.soilSaturation ?? (item.soil_moisture_index != null ? item.soil_moisture_index * 100 : item.soil_moisture_mm * 100))) },
-    { name: 'Historical Landslide Density', weight: clampPercent(toNumber(item.historicalLandslides ?? item.historical_landslide_count) * 5) },
-  ],
+const normaliseRiskZone = (item) => {
+  const rainfall24h = toNumber(item.rainfall24h ?? item.rainfall_24h_mm ?? item.rainfall_mm);
+  const slope = toNumber(item.slope ?? item.slope_deg);
+  const soilSaturation = toNumber(item.soilSaturation ?? (item.soil_moisture_index != null ? item.soil_moisture_index * 100 : item.soil_moisture_mm * 100));
+  const historicalLandslides = toNumber(item.historicalLandslides ?? item.historical_landslide_count);
+  const existingFeatures = Array.isArray(item.features) ? item.features : [];
+  const features = (existingFeatures.length > 0 ? existingFeatures : [
+    { name: '24h Rainfall Intensity', weight: clampPercent(rainfall24h / 2) },
+    { name: 'Terrain Slope Angle', weight: clampPercent(slope * 2.5) },
+    { name: 'Soil Saturation Index', weight: clampPercent(soilSaturation) },
+  ]).filter((feature) => !feature.name?.toLowerCase().includes('historical landslide density'));
+
+  return {
+    ...item,
+    id: item.id ?? `${item.latitude ?? item.lat}-${item.longitude ?? item.lng}`,
+    lat: toNumber(item.lat ?? item.latitude),
+    lng: toNumber(item.lng ?? item.longitude),
+    latitude: toNumber(item.latitude ?? item.lat),
+    longitude: toNumber(item.longitude ?? item.lng),
+    riskLevel: String(item.riskLevel ?? item.risk_level ?? 'LOW').toUpperCase(),
+    aiConfidence: clampPercent(item.aiConfidence ?? (item.confidence != null ? item.confidence * 100 : String(item.riskLevel ?? item.risk_level).toUpperCase() === 'HIGH' ? 75 : 25)),
+    rainfall24h,
+    slope,
+    soilSaturation,
+    historicalLandslides,
+    features: [
+      ...features,
+      { name: `Historical Landslide Density (${historicalLandslides} within 50 km)`, weight: clampPercent(historicalLandslides * 5) },
+    ],
   summary: item.summary ?? 'Live risk indicators are being evaluated for this location using rainfall, terrain, and historical landslide data.',
   recommendedAction: item.recommendedAction ?? 'Maintain field awareness and follow local disaster-management instructions for this risk level.',
-});
+  };
+};
 
 const normaliseAlert = (item) => ({
   ...item,

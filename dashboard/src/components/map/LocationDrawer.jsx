@@ -1,7 +1,39 @@
-import React from 'react';
-import { X, AlertTriangle, Shield, Thermometer, CloudRain, Mountain, Activity, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, AlertTriangle, Shield, Thermometer, CloudRain, Mountain, Activity, Satellite } from 'lucide-react';
+import { getSatelliteImage } from '../../services/api';
 
 export default function LocationDrawer({ location, onClose }) {
+  const [satelliteImage, setSatelliteImage] = useState(null);
+  const [satelliteLoading, setSatelliteLoading] = useState(false);
+  const [satelliteError, setSatelliteError] = useState(false);
+
+  useEffect(() => {
+    if (!location?.lat || !location?.lng) {
+      setSatelliteImage(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setSatelliteLoading(true);
+    setSatelliteError(false);
+
+    getSatelliteImage(location.lat, location.lng, 0.18)
+      .then((data) => {
+        if (!cancelled) setSatelliteImage(data);
+      })
+      .catch((error) => {
+        console.error('Failed to load location satellite imagery:', error);
+        if (!cancelled) setSatelliteError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setSatelliteLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location]);
+
   if (!location) return null;
 
   const isCritical = location.riskLevel === 'CRITICAL';
@@ -36,6 +68,36 @@ export default function LocationDrawer({ location, onClose }) {
             <X className="h-5 w-5" />
           </button>
         </div>
+
+        <section className="mt-5 overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--panel-alt)]">
+          <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+            <h3 className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--text)]">
+              <Satellite className="h-4 w-4 text-[var(--accent)]" />
+              Satellite View
+            </h3>
+            {satelliteImage?.date && (
+              <span className="text-[10px] font-semibold text-[var(--muted)]">{satelliteImage.date}</span>
+            )}
+          </div>
+          {satelliteLoading ? (
+            <div className="flex aspect-video items-center justify-center bg-[var(--panel)] text-[11px] font-semibold text-[var(--muted)]">
+              Loading location imagery...
+            </div>
+          ) : satelliteImage?.image_url ? (
+            <img
+              src={satelliteImage.image_url}
+              alt={`Satellite view of ${location.district || 'selected location'}`}
+              className="aspect-video w-full object-cover"
+            />
+          ) : (
+            <div className="flex aspect-video items-center justify-center bg-[var(--panel)] px-4 text-center text-[11px] text-[var(--muted)]">
+              {satelliteError ? 'Satellite imagery is unavailable for this location.' : 'Satellite imagery is not available.'}
+            </div>
+          )}
+          <p className="border-t border-[var(--border)] px-4 py-2 text-[10px] text-[var(--muted)]">
+            Coordinates: {Number(location.lat).toFixed(4)}, {Number(location.lng).toFixed(4)}
+          </p>
+        </section>
 
         <div className="my-6 grid grid-cols-2 gap-3">
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--panel-alt)] p-3">
@@ -80,7 +142,7 @@ export default function LocationDrawer({ location, onClose }) {
             {features.length > 0 ? features.map((feat, idx) => (
               <div key={idx}>
                 <div className="mb-1 flex justify-between text-xs">
-                  <span className="text-[var(--muted)]">{feat.name}</span>
+                  <span className="max-w-[75%] text-[var(--muted)]">{feat.name}</span>
                   <span className="font-black text-[var(--text)]">{feat.weight}%</span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--panel)]">

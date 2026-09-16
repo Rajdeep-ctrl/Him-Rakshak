@@ -12,16 +12,23 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 
-for folder in ("backend", "api", "data", "database", "ml_model"):
+for folder in ("api", "data", "database", "ml_model", "alerts"):
     path = os.path.join(ROOT_DIR, folder)
     if path not in sys.path:
         sys.path.insert(0, path)
 
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
+
 import elevation as elevation_api
+import flood_risk
 import rainfall as rainfall_api
 import seismic as seismic_api
 import landslides as historical_data
+import alert_engine
+import notification_service
 
 from connection import (
     get_all_reports,
@@ -31,7 +38,6 @@ from connection import (
     insert_risk_prediction,
     log_alert,
 )
-from notification_service import broadcast_regional_sms, send_single_sms, send_emergency_email
 
 app = FastAPI(title="Him-Rakshak API", version="2.0.0")
 
@@ -423,8 +429,42 @@ def predict(
         prediction_id = None
         print(f"⚠️ Database save failed: {exc}")
 
+    # Trigger real SMS + Email alerts if risk is High/Critical
+    alert_sent = False
+    alert_message = None
+    if alert_engine.should_trigger_alert(result.get("risk_level", "")):
+        location_label = request.location_name or f"{request.latitude},{request.longitude}"
+        alert_payload = {
+            "location": location_label,
+            "district": request.state or "NER",
+            "severity": result.get("risk_level", "HIGH"),
+        }
+
+        try:
+            sms_results = notification_service.broadcast_regional_sms(
+                contacts=[], alert=alert_payload
+            )
+            email_result = notification_service.send_emergency_email(
+                subject=f"{result.get('risk_level', '').upper()} Landslide Risk - {location_label}",
+                message_body=(
+                    f"A {result.get('risk_level', '')} landslide risk has been detected "
+                    f"near {location_label} (confidence: {int((result.get('confidence') or 0) * 100)}%). "
+                    f"Please alert district administration and nearby communities."
+                ),
+            )
+            alert_sent = any(r.get("status") in ("delivered", "simulated") for r in sms_results) \
+                or email_result.get("status") == "delivered"
+            alert_message = f"SMS: {sms_results[0].get('status') if sms_results else 'none'}, " \
+                             f"Email: {email_result.get('status')}"
+            print(f"📱📧 Alert attempt: {alert_message}")
+        except Exception as exc:
+            alert_message = f"Alert dispatch failed: {exc}"
+            print(f"⚠️ {alert_message}")
+
     return {
         "prediction_id": prediction_id,
+        "alert_sent": alert_sent,
+        "alert_message": alert_message,
         **record,
     }
 # ...existing code...
@@ -703,6 +743,73 @@ def dashboard_reports(db: Session = Depends(get_db)):
     return get_all_reports(db)
 
 
+@app.post("/predict-flood")
+def predict_flood(request: PredictRequest, db: Session = Depends(get_db)):
+    """
+    Flood risk endpoint - separate from the landslide /predict endpoint.
+    Uses live rainfall + distance to nearest major NER river to assess
+    flood risk (Low/Medium/High/Critical).
+    """
+    try:
+        weather_data = rainfall_api.get_rainfall(request.latitude, request.longitude)
+        rainfall_24h = rainfall_api.extract_rainfall_24h(weather_data) if weather_data else 0.0
+        if rainfall_24h is None:
+            rainfall_24h = 0.0
+
+        result = flood_risk.get_flood_risk(
+            request.latitude, request.longitude, rainfall_24h
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Flood prediction failed: {e}")
+
+    return {
+        "latitude": request.latitude,
+        "longitude": request.longitude,
+        "location_name": request.location_name,
+        "rainfall_24h_mm": rainfall_24h,
+        **result,
+    }
+
+
+@app.post("/test-alert")
+def test_alert(risk_level: str = Query("Critical", description="Low/Medium/High/Critical"),
+                location_name: str = Query("Test Location")):
+    """
+    TEST ONLY - directly triggers the SMS + Email alert system without
+    running the ML model, to verify Twilio/Gmail credentials are working.
+    Remove or disable this endpoint before final production deployment.
+    """
+    alert_sent = False
+    alert_message = None
+
+    if alert_engine.should_trigger_alert(risk_level):
+        alert_payload = {
+            "location": location_name,
+            "district": "NER Test Sector",
+            "severity": risk_level,
+        }
+        try:
+            sms_results = notification_service.broadcast_regional_sms(
+                contacts=[], alert=alert_payload
+            )
+            email_result = notification_service.send_emergency_email(
+                subject=f"TEST ALERT - {risk_level.upper()} Risk - {location_name}",
+                message_body=(
+                    f"This is a TEST alert. Simulated {risk_level} risk detected "
+                    f"near {location_name}."
+                ),
+            )
+            alert_sent = True
+            alert_message = f"SMS: {sms_results[0].get('status') if sms_results else 'none'}, " \
+                             f"Email: {email_result.get('status')}"
+        except Exception as exc:
+            alert_message = f"Test alert failed: {exc}"
+    else:
+        alert_message = f"'{risk_level}' does not trigger alerts (only High/Critical do)"
+
+    return {"alert_sent": alert_sent, "alert_message": alert_message}
+
+
 @app.get("/api/roads")
 def roads():
     data = get_ner_data()
@@ -757,6 +864,7 @@ def roads():
 
     return roads
 
+<<<<<<< HEAD
 class AlertBroadcastRequest(BaseModel):
     location: str
     district: str
@@ -791,6 +899,8 @@ def trigger_manual_broadcast(payload: AlertBroadcastRequest):
         "sms_details": sms_results,
         "email_details": email_result,
     }
+=======
+>>>>>>> 7087000b509551f18c3e62e6b863843f77fcdc76
 
 
 @app.post("/api/alerts/action")
@@ -864,8 +974,8 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
+        "backend.main:app",
+        host="127.0.0.1",
         port=8000,
         reload=True,
     )

@@ -12,16 +12,23 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 
-for folder in ("backend", "api", "data", "database", "ml_model"):
+for folder in ("api", "data", "database", "ml_model", "alerts"):
     path = os.path.join(ROOT_DIR, folder)
     if path not in sys.path:
         sys.path.insert(0, path)
 
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
+
 import elevation as elevation_api
+import flood_risk
 import rainfall as rainfall_api
 import seismic as seismic_api
 import landslides as historical_data
+import alert_engine
+import notification_service
 
 from connection import (
     get_all_reports,
@@ -65,27 +72,32 @@ NER_STATES = {
 
 try:
     model = joblib.load(MODEL_PATH)
-    print(" ML model loaded successfully")
-    print(f"Model features: {getattr(model, 'feature_names_in_', [])}")
+    print("✅ ML model loaded successfully")
+    print(f"✅ Model features: {getattr(model, 'feature_names_in_', [])}")
 except Exception as exc:
     model = None
-    print(f" ML model load failed: {exc}")
+    print(f"❌ ML model load failed: {exc}")
 
 try:
     HISTORICAL_DF = historical_data.load_dataset()
-    print(f" Loaded {len(HISTORICAL_DF)} historical records (NASA catalog, used for /predict context)")
+    print(f"✅ Loaded {len(HISTORICAL_DF)} historical records (NASA catalog, used for /predict context)")
 except Exception as exc:
     HISTORICAL_DF = pd.DataFrame()
-    print(f" Historical data unavailable: {exc}")
+    print(f"⚠️ Historical data unavailable: {exc}")
 
-
+# The team's own extracted-and-engineered dataset (2059 real NER landslide
+# records + generated negative samples, with State/Latitude/Longitude/
+# slope_deg/rainfall_mm/soil_moisture_mm/label columns). This is what the
+# ML model was actually TRAINED on, and is what the dashboard's map and
+# analytics endpoints (get_ner_data, risk_zones, state_risk, rainfall_trend)
+# need - NOT the smaller NASA catalog above.
 TRAINING_DATA_PATH = os.path.join(ROOT_DIR, "data", "processed", "training_data_final .csv")
 try:
     TRAINING_DF = pd.read_csv(TRAINING_DATA_PATH)
-    print(f" Loaded {len(TRAINING_DF)} training records for dashboard from {TRAINING_DATA_PATH}")
+    print(f"✅ Loaded {len(TRAINING_DF)} training records for dashboard from {TRAINING_DATA_PATH}")
 except Exception as exc:
     TRAINING_DF = pd.DataFrame()
-    print(f" Training dataset unavailable at {TRAINING_DATA_PATH}: {exc}")
+    print(f"⚠️ Training dataset unavailable at {TRAINING_DATA_PATH}: {exc}")
 
 
 class PredictRequest(BaseModel):
@@ -199,7 +211,7 @@ def build_features_and_predict(
             else 0.0
         )
     except Exception as exc:
-        print(f" Rainfall API failed: {exc}")
+        print(f"⚠️ Rainfall API failed: {exc}")
         rainfall_mm = 0.0
 
     try:
@@ -208,7 +220,7 @@ def build_features_and_predict(
             longitude,
         )
     except Exception as exc:
-        print(f" Elevation API failed: {exc}")
+        print(f"⚠️ Elevation API failed: {exc}")
         slope_deg = 0.0
 
     rainfall_mm = max(safe_float(rainfall_mm), 0.0)
@@ -237,7 +249,7 @@ def build_features_and_predict(
                 or 100.0
             )
         except Exception as exc:
-            print(f" Historical lookup failed: {exc}")
+            print(f"⚠️ Historical lookup failed: {exc}")
 
     try:
         seismic_data = (
@@ -253,7 +265,7 @@ def build_features_and_predict(
             0.0,
         )
     except Exception as exc:
-        print(f" Seismic API failed: {exc}")
+        print(f"⚠️ Seismic API failed: {exc}")
         seismic_magnitude = 0.0
 
     # Model ke exact features
@@ -353,7 +365,7 @@ def ner_states():
     )
 
 
-
+# ...existing code...
 @app.post("/predict")
 def predict(
     request: PredictRequest,
@@ -399,13 +411,47 @@ def predict(
         prediction_id = insert_risk_prediction(db, record)
     except Exception as exc:
         prediction_id = None
-        print(f" Database save failed: {exc}")
+        print(f"⚠️ Database save failed: {exc}")
+
+    # Trigger real SMS + Email alerts if risk is High/Critical
+    alert_sent = False
+    alert_message = None
+    if alert_engine.should_trigger_alert(result.get("risk_level", "")):
+        location_label = request.location_name or f"{request.latitude},{request.longitude}"
+        alert_payload = {
+            "location": location_label,
+            "district": request.state or "NER",
+            "severity": result.get("risk_level", "HIGH"),
+        }
+
+        try:
+            sms_results = notification_service.broadcast_regional_sms(
+                contacts=[], alert=alert_payload
+            )
+            email_result = notification_service.send_emergency_email(
+                subject=f"{result.get('risk_level', '').upper()} Landslide Risk - {location_label}",
+                message_body=(
+                    f"A {result.get('risk_level', '')} landslide risk has been detected "
+                    f"near {location_label} (confidence: {int((result.get('confidence') or 0) * 100)}%). "
+                    f"Please alert district administration and nearby communities."
+                ),
+            )
+            alert_sent = any(r.get("status") in ("delivered", "simulated") for r in sms_results) \
+                or email_result.get("status") == "delivered"
+            alert_message = f"SMS: {sms_results[0].get('status') if sms_results else 'none'}, " \
+                             f"Email: {email_result.get('status')}"
+            print(f"📱📧 Alert attempt: {alert_message}")
+        except Exception as exc:
+            alert_message = f"Alert dispatch failed: {exc}"
+            print(f"⚠️ {alert_message}")
 
     return {
         "prediction_id": prediction_id,
+        "alert_sent": alert_sent,
+        "alert_message": alert_message,
         **record,
     }
-
+# ...existing code...
 
 
 @app.get("/predictions/recent")
@@ -460,7 +506,7 @@ def risk_zones(
 
     result = []
 
-  
+  # ...existing code...
     for item in rows:
         item_state = normalise_state(item.get("state"))
 
@@ -476,7 +522,7 @@ def risk_zones(
             "longitude",
             item.get("lng", item.get("lon")),
         )
-
+# ...existing code...
 
         if latitude is None or longitude is None:
             continue
@@ -494,7 +540,7 @@ def risk_zones(
             }
         )
 
-    
+    # Database empty hone par NER historical points return honge
     if not result:
         data = get_ner_data()
 
@@ -649,6 +695,34 @@ def state_risk():
 @app.get("/api/reports")
 def dashboard_reports(db: Session = Depends(get_db)):
     return get_all_reports(db)
+
+
+@app.post("/predict-flood")
+def predict_flood(request: PredictRequest, db: Session = Depends(get_db)):
+    """
+    Flood risk endpoint - separate from the landslide /predict endpoint.
+    Uses live rainfall + distance to nearest major NER river to assess
+    flood risk (Low/Medium/High/Critical).
+    """
+    try:
+        weather_data = rainfall_api.get_rainfall(request.latitude, request.longitude)
+        rainfall_24h = rainfall_api.extract_rainfall_24h(weather_data) if weather_data else 0.0
+        if rainfall_24h is None:
+            rainfall_24h = 0.0
+
+        result = flood_risk.get_flood_risk(
+            request.latitude, request.longitude, rainfall_24h
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Flood prediction failed: {e}")
+
+    return {
+        "latitude": request.latitude,
+        "longitude": request.longitude,
+        "location_name": request.location_name,
+        "rainfall_24h_mm": rainfall_24h,
+        **result,
+    }
 
 
 @app.get("/api/roads")

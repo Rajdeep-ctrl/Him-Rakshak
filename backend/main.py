@@ -118,6 +118,14 @@ class FieldReportRequest(BaseModel):
     report_type: str = "crack"
 
 
+class AlertBroadcastRequest(BaseModel):
+    location: str
+    district: str = "NER Sector"
+    severity: str = "CRITICAL"
+    description: str = "Landslide hazard detected. Follow local disaster-management instructions."
+    recipient_email: Optional[str] = None
+
+
 def safe_float(value: Any, default: float = 0.0) -> float:
     try:
         return float(value)
@@ -887,6 +895,59 @@ def roads():
         )
 
     return roads
+
+
+@app.post("/api/alerts/broadcast-sms")
+def broadcast_alert(
+    payload: AlertBroadcastRequest,
+    db: Session = Depends(get_db),
+):
+    """Dispatch the dashboard emergency alert through SMS and email."""
+    alert = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+    alert["severity"] = alert["severity"].upper()
+
+    try:
+        sms_results = notification_service.broadcast_regional_sms(
+            contacts=[],
+            alert=alert,
+        )
+        email_result = notification_service.send_emergency_email(
+            subject=f"{alert['severity']} Landslide Risk - {alert['location']}",
+            message_body=(
+                f"{alert['description']} Location: {alert['location']}, "
+                f"{alert['district']}."
+            ),
+            recipient=alert.get("recipient_email"),
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Alert dispatch failed: {exc}") from exc
+
+    statuses = [result.get("status") for result in sms_results]
+    statuses.append(email_result.get("status"))
+    alert_sent = any(status in {"delivered", "simulated"} for status in statuses)
+
+    try:
+        log_alert(
+            db,
+            {
+                "risk_prediction_id": None,
+                "location_name": alert["location"],
+                "risk_level": alert["severity"],
+                "message": alert["description"],
+                "language": "en",
+                "alert_channel": "sms,email",
+                "sent_status": "delivered" if alert_sent else "failed",
+            },
+        )
+    except Exception as exc:
+        print(f"⚠️ Alert dispatch log failed: {exc}")
+
+    return {
+        "status": "dispatched" if alert_sent else "failed",
+        "alert_sent": alert_sent,
+        "sms_results": sms_results,
+        "email_details": email_result,
+    }
 
 class AlertActionRequest(BaseModel):
     alert_id: str

@@ -128,6 +128,21 @@ export const getRainfallTrend = (isLiveApi) =>
 export const getStateRiskAnalytics = (isLiveApi) =>
   fetchWithFallback('/analytics/state-risk', MOCK_ANALYTICS_STATE_RISK, isLiveApi);
 
+export async function getSatelliteImage(latitude, longitude, halfWidthDeg = 1.5) {
+  const params = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+    half_width_deg: String(halfWidthDeg),
+  });
+
+  const response = await fetch(`${BASE_URL}/satellite-image?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(`Satellite image request failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
 // Open-Meteo Weather API Integration (Free API, No Key Needed)
 export async function getWeatherByCoords(lat, lng) {
   try {

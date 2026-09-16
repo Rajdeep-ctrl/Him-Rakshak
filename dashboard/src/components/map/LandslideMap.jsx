@@ -1,7 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, ImageOverlay, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import LocationDrawer from './LocationDrawer';
+import { getSatelliteImage } from '../../services/api';
+
+const SATELLITE_CENTER = { latitude: 26.2006, longitude: 92.9376 };
+const SATELLITE_HALF_WIDTH = 1.5;
+
+function SatelliteImageLayer({ enabled }) {
+  const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+
+    getSatelliteImage(
+      SATELLITE_CENTER.latitude,
+      SATELLITE_CENTER.longitude,
+      SATELLITE_HALF_WIDTH,
+    )
+      .then((data) => {
+        if (!cancelled) setImage(data);
+      })
+      .catch((requestError) => {
+        console.error('Failed to load satellite imagery:', requestError);
+        if (!cancelled) setError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+
+  const bounds = [
+    [SATELLITE_CENTER.latitude - SATELLITE_HALF_WIDTH, SATELLITE_CENTER.longitude - SATELLITE_HALF_WIDTH],
+    [SATELLITE_CENTER.latitude + SATELLITE_HALF_WIDTH, SATELLITE_CENTER.longitude + SATELLITE_HALF_WIDTH],
+  ];
+
+  return (
+    <>
+      {image?.image_url && (
+        <ImageOverlay
+          url={image.image_url}
+          bounds={bounds}
+          opacity={0.58}
+          zIndex={2}
+          interactive={false}
+        />
+      )}
+      {enabled && (loading || error) && (
+        <div className="pointer-events-none absolute left-1/2 top-4 z-[1000] -translate-x-1/2 rounded-full border border-[var(--border)] bg-[var(--panel)]/90 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--muted)] shadow-[var(--shadow-card)] backdrop-blur-md">
+          {loading ? 'Loading satellite imagery...' : 'Satellite imagery unavailable'}
+        </div>
+      )}
+    </>
+  );
+}
 
 // Helper component to auto-pan map when search matches a location
 function MapViewUpdater({ targetLocation }) {
@@ -56,6 +118,7 @@ export default function LandslideMap({ locations = [], filterRisk = 'ALL', searc
   const [clickedSpot, setClickedSpot] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
+  const [showSatellite, setShowSatellite] = useState(true);
 
   // Fetch live weather data from Open-Meteo REST API
   const fetchLiveWeather = async (lat, lng) => {
@@ -154,6 +217,8 @@ export default function LandslideMap({ locations = [], filterRisk = 'ALL', searc
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        <SatelliteImageLayer enabled={showSatellite} />
 
         <MapViewUpdater targetLocation={activeSearchTarget} />
 
@@ -301,6 +366,19 @@ export default function LandslideMap({ locations = [], filterRisk = 'ALL', searc
           </Marker>
         ))}
       </MapContainer>
+
+      <button
+        type="button"
+        onClick={() => setShowSatellite((visible) => !visible)}
+        className={`absolute right-4 top-4 z-20 rounded-xl border px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] shadow-[var(--shadow-card)] backdrop-blur-md transition ${
+          showSatellite
+            ? 'border-[var(--accent)]/30 bg-[var(--accent-soft)] text-[var(--accent)]'
+            : 'border-[var(--border)] bg-[var(--panel)]/90 text-[var(--muted)] hover:text-[var(--text)]'
+        }`}
+        aria-pressed={showSatellite}
+      >
+        {showSatellite ? 'Satellite on' : 'Satellite off'}
+      </button>
 
       {/* Floating Map Legend */}
       <div className="absolute bottom-4 left-4 z-20 rounded-[18px] border border-[var(--border)] bg-[var(--panel)]/90 p-3 text-xs shadow-[var(--shadow-card)] backdrop-blur-md">

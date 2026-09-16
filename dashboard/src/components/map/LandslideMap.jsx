@@ -122,26 +122,25 @@ export default function LandslideMap({ locations = [], filterRisk = 'ALL', searc
     searchQuery.trim() && filteredLocations.length > 0 ? filteredLocations[0] : null;
 
   return (
-    <div className="relative w-full h-full min-h-[500px] rounded-xl overflow-hidden border border-command-border shadow-2xl">
-      {/* Leaflet Popup Style Override (Theme Matched) */}
+    <div className="relative h-full min-h-[500px] w-full overflow-hidden rounded-[20px]">
       <style>{`
         .leaflet-popup-content-wrapper {
-          background-color: #0F172A !important;
-          color: #F8FAFC !important;
-          border: 1px solid #334155 !important;
-          border-radius: 0.75rem !important;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+          background-color: #fffdf9 !important;
+          color: #201d1a !important;
+          border: 1px solid #e4ddd3 !important;
+          border-radius: 1rem !important;
+          box-shadow: 0 18px 42px rgba(32,29,26,0.08) !important;
         }
         .leaflet-popup-tip {
-          background-color: #0F172A !important;
-          border: 1px solid #334155 !important;
+          background-color: #fffdf9 !important;
+          border: 1px solid #e4ddd3 !important;
         }
         .leaflet-container a.leaflet-popup-close-button {
-          color: #94A3B8 !important;
+          color: #6d645d !important;
           padding: 8px 8px 0 0 !important;
         }
         .leaflet-container a.leaflet-popup-close-button:hover {
-          color: #FFFFFF !important;
+          color: #201d1a !important;
         }
       `}</style>
 
@@ -173,49 +172,46 @@ export default function LandslideMap({ locations = [], filterRisk = 'ALL', searc
                 remove: () => setClickedSpot(null),
               }}
             >
-              <div className="p-1 space-y-2 text-white min-w-[200px]">
+              <div className="min-w-[200px] space-y-2 p-1 text-[var(--text)]">
                 <div className="flex items-center justify-between gap-3 pr-4">
-                  <span className="font-bold text-sm text-white">Custom Location</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/30 text-cyan-400 border border-cyan-500/40">
-                    SELECTED
+                  <span className="text-sm font-black text-[var(--text)]">Custom Location</span>
+                  <span className="rounded border border-[var(--accent)]/20 bg-[var(--accent-soft)] px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-[var(--accent)]">
+                    Selected
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 font-mono">
+                <p className="font-mono text-xs text-[var(--muted)]">
                   Lat: {clickedSpot.lat.toFixed(4)}, Lng: {clickedSpot.lng.toFixed(4)}
                 </p>
 
-                {/* Real-time Weather Box */}
-                <div className="text-xs space-y-1 bg-slate-800/80 p-2.5 rounded-lg border border-slate-700">
-                  <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider mb-1">
+                <div className="space-y-1 rounded-xl border border-[var(--border)] bg-[var(--panel-alt)] p-2.5 text-xs">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--accent)]">
                     Live Weather Report
                   </p>
                   {loadingWeather ? (
-                    <p className="text-slate-400 text-[11px] animate-pulse">Fetching weather...</p>
+                    <p className="animate-pulse text-[11px] text-[var(--muted)]">Fetching weather...</p>
                   ) : weatherData ? (
                     <>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Temperature:</span>
-                        <span className="text-white font-bold">{weatherData.temperature}°C</span>
+                        <span className="text-[var(--muted)]">Temperature:</span>
+                        <span className="font-black text-[var(--text)]">{weatherData.temperature}°C</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Condition:</span>
-                        <span className="text-cyan-300 font-semibold">
-                          {parseWeatherCondition(weatherData.weatherCode)}
-                        </span>
+                        <span className="text-[var(--muted)]">Condition:</span>
+                        <span className="font-semibold text-[var(--accent)]">{parseWeatherCondition(weatherData.weatherCode)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Wind Speed:</span>
-                        <span className="text-slate-200 font-medium">{weatherData.windSpeed} km/h</span>
+                        <span className="text-[var(--muted)]">Wind Speed:</span>
+                        <span className="font-medium text-[var(--text)]">{weatherData.windSpeed} km/h</span>
                       </div>
                     </>
                   ) : (
-                    <p className="text-slate-400 text-[11px]">Weather info unavailable</p>
+                    <p className="text-[11px] text-[var(--muted)]">Weather info unavailable</p>
                   )}
                 </div>
 
                 <button
                   onClick={() => setSelectedLocation(clickedSpot)}
-                  className="w-full mt-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors"
+                  className="mt-2 w-full rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[var(--accent-2)]"
                 >
                   Inspect Risk Factors
                 </button>
@@ -238,69 +234,65 @@ export default function LandslideMap({ locations = [], filterRisk = 'ALL', searc
             }}
           >
             <Popup className="custom-popup">
-              <div className="p-1 space-y-2 text-white">
+              <div className="space-y-2 p-1 text-[var(--text)]">
                 <div className="flex items-center justify-between gap-3 pr-4">
-                  <span className="font-bold text-sm text-white">{loc.district}</span>
+                  <span className="text-sm font-black text-[var(--text)]">{loc.district}</span>
                   <span
-                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                    className={`rounded border px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] ${
                       loc.riskLevel === 'CRITICAL'
-                        ? 'bg-red-500/30 text-red-400 border border-red-500/40'
+                        ? 'border-[var(--danger)]/20 bg-[var(--danger-soft)] text-[var(--danger)]'
                         : loc.riskLevel === 'HIGH'
-                        ? 'bg-orange-500/30 text-orange-400 border border-orange-500/40'
-                        : loc.riskLevel === 'MEDIUM'
-                        ? 'bg-amber-500/30 text-amber-400 border border-amber-500/40'
-                        : 'bg-emerald-500/30 text-emerald-400 border border-emerald-500/40'
+                          ? 'border-[var(--warning)]/20 bg-[var(--warning-soft)] text-[var(--warning)]'
+                          : loc.riskLevel === 'MEDIUM'
+                            ? 'border-[var(--amber)]/20 bg-[var(--amber-soft)] text-[var(--amber)]'
+                            : 'border-[var(--success)]/20 bg-[var(--success-soft)] text-[var(--success)]'
                     }`}
                   >
                     {loc.riskLevel}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 font-medium">{loc.state}</p>
+                <p className="text-xs font-medium text-[var(--muted)]">{loc.state}</p>
 
-                {/* Real-time Weather Box */}
-                <div className="text-xs space-y-1 bg-slate-800/80 p-2.5 rounded-lg border border-slate-700">
-                  <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider mb-1">
+                <div className="space-y-1 rounded-xl border border-[var(--border)] bg-[var(--panel-alt)] p-2.5 text-xs">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--accent)]">
                     Live Weather Report
                   </p>
                   {loadingWeather ? (
-                    <p className="text-slate-400 text-[11px] animate-pulse">Fetching current weather...</p>
+                    <p className="animate-pulse text-[11px] text-[var(--muted)]">Fetching current weather...</p>
                   ) : weatherData ? (
                     <>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Temperature:</span>
-                        <span className="text-white font-bold">{weatherData.temperature}°C</span>
+                        <span className="text-[var(--muted)]">Temperature:</span>
+                        <span className="font-black text-[var(--text)]">{weatherData.temperature}°C</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Condition:</span>
-                        <span className="text-cyan-300 font-semibold">
-                          {parseWeatherCondition(weatherData.weatherCode)}
-                        </span>
+                        <span className="text-[var(--muted)]">Condition:</span>
+                        <span className="font-semibold text-[var(--accent)]">{parseWeatherCondition(weatherData.weatherCode)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Wind Speed:</span>
-                        <span className="text-slate-200 font-medium">{weatherData.windSpeed} km/h</span>
+                        <span className="text-[var(--muted)]">Wind Speed:</span>
+                        <span className="font-medium text-[var(--text)]">{weatherData.windSpeed} km/h</span>
                       </div>
                     </>
                   ) : (
-                    <p className="text-slate-400 text-[11px]">Click pin to load live weather</p>
+                    <p className="text-[11px] text-[var(--muted)]">Click pin to load live weather</p>
                   )}
                 </div>
 
-                {/* Risk and Precipitation Parameters */}
-                <div className="text-xs text-slate-300 space-y-1 bg-slate-800/40 p-2 rounded-lg border border-slate-700/50">
+                <div className="space-y-1 rounded-xl border border-[var(--border)] bg-[var(--panel-alt)] p-2 text-xs text-[var(--muted)]">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Rainfall (24h):</span>
-                    <span className="text-cyan-400 font-semibold">{loc.rainfall24h || loc.rain || 0} mm</span>
+                    <span>Rainfall (24h):</span>
+                    <span className="font-black text-[var(--accent)]">{loc.rainfall24h || loc.rain || 0} mm</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">AI Risk Score:</span>
-                    <span className="text-emerald-400 font-semibold">{loc.aiConfidence || 90}%</span>
+                    <span>AI Risk Score:</span>
+                    <span className="font-black text-[var(--success)]">{loc.aiConfidence || 90}%</span>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setSelectedLocation(loc)}
-                  className="w-full mt-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors"
+                  className="mt-2 w-full rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[var(--accent-2)]"
                 >
                   Inspect Risk Factors
                 </button>
@@ -311,25 +303,27 @@ export default function LandslideMap({ locations = [], filterRisk = 'ALL', searc
       </MapContainer>
 
       {/* Floating Map Legend */}
-      <div className="absolute bottom-4 left-4 z-20 bg-command-surface/90 backdrop-blur-md p-3 rounded-lg border border-command-border text-xs space-y-1.5 shadow-xl">
-        <p className="font-bold text-slate-200 mb-1 border-b border-command-border pb-1">
+      <div className="absolute bottom-4 left-4 z-20 rounded-[18px] border border-[var(--border)] bg-[var(--panel)]/90 p-3 text-xs shadow-[var(--shadow-card)] backdrop-blur-md">
+        <p className="mb-1 border-b border-[var(--border)] pb-1 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--text)]">
           Landslide Risk Level
         </p>
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-500"></span>
-          <span className="text-command-muted">Critical Risk (&gt;85%)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-          <span className="text-command-muted">High Risk (70-85%)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
-          <span className="text-command-muted">Medium Risk (50-70%)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <span className="text-command-muted">Low Risk (&lt;50%)</span>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--danger)]" />
+            <span className="text-[var(--muted)]">Critical Risk (&gt;85%)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--warning)]" />
+            <span className="text-[var(--muted)]">High Risk (70-85%)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--amber)]" />
+            <span className="text-[var(--muted)]">Medium Risk (50-70%)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--success)]" />
+            <span className="text-[var(--muted)]">Low Risk (&lt;50%)</span>
+          </div>
         </div>
       </div>
 

@@ -61,25 +61,24 @@ export default function Alerts() {
   );
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-command-surface p-6 rounded-xl border border-command-border">
+    <div className="mx-auto max-w-[1600px] space-y-6 p-1 sm:p-2">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-5 shadow-[var(--shadow-card)]">
         <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Bell className="w-5 h-5 text-red-400" />
+          <h1 className="flex items-center gap-2 text-xl font-black tracking-[0.06em] text-[var(--text)]">
+            <Bell className="h-5 w-5 text-[var(--danger)]" />
             Early Warning Incident Control Center
           </h1>
-          <p className="text-xs text-command-muted mt-1">
-            Real-time automated landslide risk triggers and field dispatch management
+          <p className="mt-1 text-xs font-medium text-[var(--muted)]">
+            Real-time landslide triggers and field dispatch management
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Filter className="w-4 h-4 text-command-muted" />
+        <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--panel-alt)] px-3 py-2 text-xs font-semibold text-[var(--text)]">
+          <Filter className="h-4 w-4 text-[var(--muted)]" />
           <select
             value={filterSeverity}
             onChange={(e) => setFilterSeverity(e.target.value)}
-            className="bg-command-bg border border-command-border text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-cyan-500 cursor-pointer"
+            className="cursor-pointer bg-transparent pr-1 text-[var(--text)] focus:outline-none"
           >
             <option value="ALL">All Severity Levels</option>
             <option value="CRITICAL">Critical Only</option>
@@ -89,7 +88,6 @@ export default function Alerts() {
         </div>
       </div>
 
-      {/* Alert Feed Table / Cards */}
       {loading ? (
         <SkeletonLoader type="table" count={4} />
       ) : (
@@ -100,44 +98,44 @@ export default function Alerts() {
             return (
               <div
                 key={alt.id}
-                className="bg-command-surface p-5 rounded-xl border border-command-border hover:border-slate-600 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                className="flex flex-col items-start justify-between gap-4 rounded-[24px] border border-[var(--border)] bg-[var(--panel)] p-5 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5 md:flex-row md:items-center"
               >
-                <div className="space-y-1.5 flex-1">
+                <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${
                         isCritical
-                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                          : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                          ? 'border-[var(--danger)]/20 bg-[var(--danger-soft)] text-[var(--danger)]'
+                          : 'border-[var(--warning)]/20 bg-[var(--warning-soft)] text-[var(--warning)]'
                       }`}
                     >
                       {alt.severity}
                     </span>
-                    <span className="text-xs font-semibold text-cyan-400">{alt.id}</span>
-                    <span className="text-[11px] text-command-muted">• {alt.timestamp}</span>
+                    <span className="text-[11px] font-bold text-[var(--accent)]">{alt.id}</span>
+                    <span className="text-[11px] text-[var(--muted)]">• {alt.timestamp}</span>
                   </div>
 
-                  <h3 className="text-base font-bold text-slate-100">{alt.title}</h3>
-                  <p className="text-xs text-command-muted">{alt.description}</p>
-                  <p className="text-xs text-slate-300 font-medium pt-1">
-                    Location: <span className="text-slate-100">{alt.district}, {alt.state}</span> | Rainfall: <span className="text-cyan-400">{alt.rainfall} mm</span>
+                  <h3 className="text-lg font-black text-[var(--text)]">{alt.title}</h3>
+                  <p className="text-sm text-[var(--muted)]">{alt.description}</p>
+                  <p className="pt-1 text-xs font-medium text-[var(--muted)]">
+                    Location: <span className="text-[var(--text)]">{alt.district}, {alt.state}</span> | Rainfall: <span className="text-[var(--accent)]">{alt.rainfall} mm</span>
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
                   <button
                     onClick={() => handleBroadcast(alt)}
                     disabled={isBroadcasting}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-lg shadow-red-900/30 cursor-pointer"
+                    className="flex items-center gap-2 rounded-2xl bg-[var(--danger)] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[var(--danger)]/90 disabled:opacity-60"
                   >
                     {isBroadcasting ? (
                       <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         Broadcasting...
                       </>
                     ) : (
                       <>
-                        <Send className="w-3.5 h-3.5" />
+                        <Send className="h-3.5 w-3.5" />
                         Broadcast Alert
                       </>
                     )}
@@ -145,16 +143,16 @@ export default function Alerts() {
 
                   <button
                     onClick={() => setSelectedAlert(alt)}
-                    className="px-4 py-2 bg-command-card hover:bg-slate-700 border border-command-border text-slate-200 text-xs font-semibold rounded-lg transition-colors"
+                    className="rounded-2xl border border-[var(--border)] bg-[var(--panel-alt)] px-4 py-2.5 text-xs font-bold text-[var(--text)] transition hover:border-[var(--accent)]/20"
                   >
-                    Inspect Details
+                    Inspect
                   </button>
 
                   <button
                     onClick={() => handleAction(alt.id, 'Acknowledged')}
-                    className="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+                    className="flex items-center gap-2 rounded-2xl border border-[var(--success)]/20 bg-[var(--success-soft)] px-4 py-2.5 text-xs font-bold text-[var(--success)]"
                   >
-                    <CheckCircle className="w-3.5 h-3.5" />
+                    <CheckCircle className="h-3.5 w-3.5" />
                     Acknowledge
                   </button>
                 </div>
@@ -164,7 +162,6 @@ export default function Alerts() {
         </div>
       )}
 
-      {/* Detail Modal */}
       {selectedAlert && (
         <AlertModal
           alert={selectedAlert}

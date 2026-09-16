@@ -30,7 +30,6 @@ from connection import (
     insert_field_report,
     insert_risk_prediction,
 )
-from notification_service import broadcast_regional_sms, send_single_sms, send_emergency_email
 
 app = FastAPI(title="Him-Rakshak API", version="2.0.0")
 
@@ -66,32 +65,27 @@ NER_STATES = {
 
 try:
     model = joblib.load(MODEL_PATH)
-    print("✅ ML model loaded successfully")
-    print(f"✅ Model features: {getattr(model, 'feature_names_in_', [])}")
+    print(" ML model loaded successfully")
+    print(f"Model features: {getattr(model, 'feature_names_in_', [])}")
 except Exception as exc:
     model = None
-    print(f"❌ ML model load failed: {exc}")
+    print(f" ML model load failed: {exc}")
 
 try:
     HISTORICAL_DF = historical_data.load_dataset()
-    print(f"✅ Loaded {len(HISTORICAL_DF)} historical records (NASA catalog, used for /predict context)")
+    print(f" Loaded {len(HISTORICAL_DF)} historical records (NASA catalog, used for /predict context)")
 except Exception as exc:
     HISTORICAL_DF = pd.DataFrame()
-    print(f"⚠️ Historical data unavailable: {exc}")
+    print(f" Historical data unavailable: {exc}")
 
-# The team's own extracted-and-engineered dataset (2059 real NER landslide
-# records + generated negative samples, with State/Latitude/Longitude/
-# slope_deg/rainfall_mm/soil_moisture_mm/label columns). This is what the
-# ML model was actually TRAINED on, and is what the dashboard's map and
-# analytics endpoints (get_ner_data, risk_zones, state_risk, rainfall_trend)
-# need - NOT the smaller NASA catalog above.
+
 TRAINING_DATA_PATH = os.path.join(ROOT_DIR, "data", "processed", "training_data_final .csv")
 try:
     TRAINING_DF = pd.read_csv(TRAINING_DATA_PATH)
-    print(f"✅ Loaded {len(TRAINING_DF)} training records for dashboard from {TRAINING_DATA_PATH}")
+    print(f" Loaded {len(TRAINING_DF)} training records for dashboard from {TRAINING_DATA_PATH}")
 except Exception as exc:
     TRAINING_DF = pd.DataFrame()
-    print(f"⚠️ Training dataset unavailable at {TRAINING_DATA_PATH}: {exc}")
+    print(f" Training dataset unavailable at {TRAINING_DATA_PATH}: {exc}")
 
 
 class PredictRequest(BaseModel):
@@ -205,7 +199,7 @@ def build_features_and_predict(
             else 0.0
         )
     except Exception as exc:
-        print(f"⚠️ Rainfall API failed: {exc}")
+        print(f" Rainfall API failed: {exc}")
         rainfall_mm = 0.0
 
     try:
@@ -214,7 +208,7 @@ def build_features_and_predict(
             longitude,
         )
     except Exception as exc:
-        print(f"⚠️ Elevation API failed: {exc}")
+        print(f" Elevation API failed: {exc}")
         slope_deg = 0.0
 
     rainfall_mm = max(safe_float(rainfall_mm), 0.0)
@@ -243,7 +237,7 @@ def build_features_and_predict(
                 or 100.0
             )
         except Exception as exc:
-            print(f"⚠️ Historical lookup failed: {exc}")
+            print(f" Historical lookup failed: {exc}")
 
     try:
         seismic_data = (
@@ -259,7 +253,7 @@ def build_features_and_predict(
             0.0,
         )
     except Exception as exc:
-        print(f"⚠️ Seismic API failed: {exc}")
+        print(f" Seismic API failed: {exc}")
         seismic_magnitude = 0.0
 
     # Model ke exact features
@@ -359,7 +353,7 @@ def ner_states():
     )
 
 
-# ...existing code...
+
 @app.post("/predict")
 def predict(
     request: PredictRequest,
@@ -405,13 +399,13 @@ def predict(
         prediction_id = insert_risk_prediction(db, record)
     except Exception as exc:
         prediction_id = None
-        print(f"⚠️ Database save failed: {exc}")
+        print(f" Database save failed: {exc}")
 
     return {
         "prediction_id": prediction_id,
         **record,
     }
-# ...existing code...
+
 
 
 @app.get("/predictions/recent")
@@ -466,7 +460,7 @@ def risk_zones(
 
     result = []
 
-  # ...existing code...
+  
     for item in rows:
         item_state = normalise_state(item.get("state"))
 
@@ -482,7 +476,7 @@ def risk_zones(
             "longitude",
             item.get("lng", item.get("lon")),
         )
-# ...existing code...
+
 
         if latitude is None or longitude is None:
             continue
@@ -500,7 +494,7 @@ def risk_zones(
             }
         )
 
-    # Database empty hone par NER historical points return honge
+    
     if not result:
         data = get_ner_data()
 
@@ -661,33 +655,6 @@ def dashboard_reports(db: Session = Depends(get_db)):
 def roads():
     return []
 
-class AlertBroadcastRequest(BaseModel):
-    location: str
-    district: str
-    severity: str
-    description: str = ""
-
-
-@app.post("/api/alerts/broadcast-sms")
-def trigger_manual_broadcast(payload: AlertBroadcastRequest):
-    test_contacts = [
-        {"phone": "9596472491", "language_pref": "en", "village_or_zone": payload.location},
-        {"phone": "9876543210", "language_pref": "hi", "village_or_zone": payload.location},
-    ]
-
-    data = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
-    sms_results = broadcast_regional_sms(test_contacts, data)
-
-    # Trigger emergency email dispatch
-    email_subject = f"{payload.severity} Hazard: {payload.location}, {payload.district}"
-    email_body = f"<b>Critical landslide alert:</b><br>Location: {payload.location}, {payload.district}<br>Details: {payload.description}"
-    email_result = send_emergency_email(email_subject, email_body)
-
-    return {
-        "status": "broadcast_complete",
-        "sms_details": sms_results,
-        "email_details": email_result,
-    }
 
 @app.get("/api/satellite-image")
 def satellite_image(latitude: float = Query(...), longitude: float = Query(...),
@@ -731,8 +698,8 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
+        "backend.main:app",
+        host="127.0.0.1",
         port=8000,
         reload=True,
     )

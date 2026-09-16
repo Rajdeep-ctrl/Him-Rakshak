@@ -725,6 +725,45 @@ def predict_flood(request: PredictRequest, db: Session = Depends(get_db)):
     }
 
 
+@app.post("/test-alert")
+def test_alert(risk_level: str = Query("Critical", description="Low/Medium/High/Critical"),
+                location_name: str = Query("Test Location")):
+    """
+    TEST ONLY - directly triggers the SMS + Email alert system without
+    running the ML model, to verify Twilio/Gmail credentials are working.
+    Remove or disable this endpoint before final production deployment.
+    """
+    alert_sent = False
+    alert_message = None
+
+    if alert_engine.should_trigger_alert(risk_level):
+        alert_payload = {
+            "location": location_name,
+            "district": "NER Test Sector",
+            "severity": risk_level,
+        }
+        try:
+            sms_results = notification_service.broadcast_regional_sms(
+                contacts=[], alert=alert_payload
+            )
+            email_result = notification_service.send_emergency_email(
+                subject=f"TEST ALERT - {risk_level.upper()} Risk - {location_name}",
+                message_body=(
+                    f"This is a TEST alert. Simulated {risk_level} risk detected "
+                    f"near {location_name}."
+                ),
+            )
+            alert_sent = True
+            alert_message = f"SMS: {sms_results[0].get('status') if sms_results else 'none'}, " \
+                             f"Email: {email_result.get('status')}"
+        except Exception as exc:
+            alert_message = f"Test alert failed: {exc}"
+    else:
+        alert_message = f"'{risk_level}' does not trigger alerts (only High/Critical do)"
+
+    return {"alert_sent": alert_sent, "alert_message": alert_message}
+
+
 @app.get("/api/roads")
 def roads():
     return []

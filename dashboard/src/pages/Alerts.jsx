@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getAlerts } from '../services/api';
+import { getAlerts, broadcastEmergencyAlert } from '../services/api';
 import { useDataMode } from '../context/DataModeContext';
 import AlertModal from '../components/alerts/AlertModal';
 import SkeletonLoader from '../components/common/SkeletonLoader';
-import { Bell, Filter, ShieldAlert, CheckCircle } from 'lucide-react';
+import { Bell, Filter, ShieldAlert, CheckCircle, Send, Loader2 } from 'lucide-react';
 
 export default function Alerts() {
   const { isLiveApi, addToast } = useDataMode();
@@ -11,6 +11,7 @@ export default function Alerts() {
   const [loading, setLoading] = useState(true);
   const [filterSeverity, setFilterSeverity] = useState('ALL');
   const [selectedAlert, setSelectedAlert] = useState(null);
+  const [broadcastingId, setBroadcastingId] = useState(null);
 
   useEffect(() => {
     async function loadAlerts() {
@@ -34,6 +35,25 @@ export default function Alerts() {
       )
     );
     addToast(`Alert ${alertId} updated to ${actionType}`, 'success');
+  };
+
+  const handleBroadcast = async (alert) => {
+    setBroadcastingId(alert.id);
+    try {
+      const payload = {
+        location: alert.title || alert.location || "Mawsynram Sector",
+        district: alert.district || "East Khasi Hills",
+        severity: alert.severity || "CRITICAL",
+        description: alert.description || "Continuous heavy rainfall triggering steep slope destabilization."
+      };
+      const res = await broadcastEmergencyAlert(payload);
+      addToast(`Emergency Alert Dispatched via SMS & Email to ${res.email_details?.recipient || 'Command'}`, 'success');
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to dispatch alert. Check server connection.', 'error');
+    } finally {
+      setBroadcastingId(null);
+    }
   };
 
   const filteredAlerts = alerts.filter(
@@ -76,6 +96,7 @@ export default function Alerts() {
         <div className="space-y-4">
           {filteredAlerts.map((alt) => {
             const isCritical = alt.severity === 'CRITICAL';
+            const isBroadcasting = broadcastingId === alt.id;
             return (
               <div
                 key={alt.id}
@@ -104,6 +125,24 @@ export default function Alerts() {
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    onClick={() => handleBroadcast(alt)}
+                    disabled={isBroadcasting}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-lg shadow-red-900/30 cursor-pointer"
+                  >
+                    {isBroadcasting ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Broadcasting...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        Broadcast Alert
+                      </>
+                    )}
+                  </button>
+
                   <button
                     onClick={() => setSelectedAlert(alt)}
                     className="px-4 py-2 bg-command-card hover:bg-slate-700 border border-command-border text-slate-200 text-xs font-semibold rounded-lg transition-colors"

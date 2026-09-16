@@ -30,6 +30,7 @@ from connection import (
     insert_field_report,
     insert_risk_prediction,
 )
+from notification_service import broadcast_regional_sms, send_single_sms, send_emergency_email
 
 app = FastAPI(title="Him-Rakshak API", version="2.0.0")
 
@@ -660,6 +661,33 @@ def dashboard_reports(db: Session = Depends(get_db)):
 def roads():
     return []
 
+class AlertBroadcastRequest(BaseModel):
+    location: str
+    district: str
+    severity: str
+    description: str = ""
+
+
+@app.post("/api/alerts/broadcast-sms")
+def trigger_manual_broadcast(payload: AlertBroadcastRequest):
+    test_contacts = [
+        {"phone": "9596472491", "language_pref": "en", "village_or_zone": payload.location},
+        {"phone": "9876543210", "language_pref": "hi", "village_or_zone": payload.location},
+    ]
+
+    data = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+    sms_results = broadcast_regional_sms(test_contacts, data)
+
+    # Trigger emergency email dispatch
+    email_subject = f"{payload.severity} Hazard: {payload.location}, {payload.district}"
+    email_body = f"<b>Critical landslide alert:</b><br>Location: {payload.location}, {payload.district}<br>Details: {payload.description}"
+    email_result = send_emergency_email(email_subject, email_body)
+
+    return {
+        "status": "broadcast_complete",
+        "sms_details": sms_results,
+        "email_details": email_result,
+    }
 
 @app.get("/api/satellite-image")
 def satellite_image(latitude: float = Query(...), longitude: float = Query(...),
@@ -703,8 +731,8 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "backend.main:app",
-        host="127.0.0.1",
+        "main:app",
+        host="0.0.0.0",
         port=8000,
         reload=True,
     )

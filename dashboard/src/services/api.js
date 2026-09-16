@@ -105,3 +105,26 @@ export const submitReportApi = async (formData, isLiveApiOverride) => {
   if (!response.ok) throw new Error('Failed to submit report to live API');
   return await response.json();
 };
+
+export const broadcastEmergencyAlert = async (alertData = {}) => {
+  const payload = {
+    location: alertData.location || "Mawsynram Sector",
+    district: alertData.district || "East Khasi Hills",
+    severity: alertData.severity || "CRITICAL",
+    description: alertData.description || "Continuous heavy rainfall triggering steep slope destabilization."
+  };
+
+  const response = await fetch("http://127.0.0.1:8000/api/alerts/broadcast-sms", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Broadcast failed with status: ${response.status}`);
+  }
+
+  return await response.json();
+};

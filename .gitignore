@@ -224,3 +224,9 @@ __marimo__/
 
 node_modules/
 dashboard/node_modules/
+
+node_modules/
+*.db
+.env
+backend/.env
+__pycache__/

@@ -15,7 +15,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }) {
         >
           <X className="w-5 h-5" />
         </button>
-        <WeatherAIChatbot />
+        <WeatherAIChatbot onClose={onClose} />
       </div>
     </div>
   );

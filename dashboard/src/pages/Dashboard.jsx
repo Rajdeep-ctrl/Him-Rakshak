@@ -24,9 +24,11 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
 } from 'recharts';
 
 export default function Dashboard() {
@@ -322,29 +324,47 @@ export default function Dashboard() {
         </div>
 
         <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={rainfallData}>
-              <defs>
-                <linearGradient id="colorRain" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2c5c4d" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#2c5c4d" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="time" stroke="#726961" fontSize={12} />
-              <YAxis stroke="#726961" fontSize={12} unit="mm" />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#fffdf9', borderColor: '#e4ddd3', borderRadius: '14px', color: '#201d1a', fontSize: '12px' }}
-              />
-              <Area
-                type="monotone"
-                dataKey="rainfall"
-                stroke="#2c5c4d"
-                strokeWidth={2.5}
-                fillOpacity={1}
-                fill="url(#colorRain)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          {rainfallData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={rainfallData}>
+                <defs>
+                  <linearGradient id="colorRain" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2c5c4d" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#2c5c4d" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="time" stroke="#726961" fontSize={12} />
+                <YAxis stroke="#726961" fontSize={12} unit=" mm" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#fffdf9', borderColor: '#e4ddd3', borderRadius: '14px', color: '#201d1a', fontSize: '12px' }}
+                  formatter={(value, name) => [`${value} mm`, name === 'cumulativeRainfall' ? 'Cumulative rainfall' : 'Critical threshold']}
+                />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="cumulativeRainfall"
+                  name="Cumulative rainfall"
+                  stroke="#2c5c4d"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#colorRain)"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="criticalThreshold"
+                  name="Critical threshold"
+                  stroke="#b84a36"
+                  strokeWidth={2}
+                  strokeDasharray="6 4"
+                  dot={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-[var(--border)] text-xs font-semibold text-[var(--muted)]">
+              No rainfall observations returned by the API.
+            </div>
+          )}
         </div>
       </div>
 

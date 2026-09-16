@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Send, 
   Bot, 
@@ -13,11 +14,13 @@ import {
   Mic,
   MicOff,
   Volume2,
-  VolumeX
+  VolumeX,
+  ArrowUpRight
 } from 'lucide-react';
 import { getWeatherByPlace } from '../../services/api';
 
-export default function WeatherAIChatbot() {
+export default function WeatherAIChatbot({ onClose }) {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -100,38 +103,78 @@ export default function WeatherAIChatbot() {
   };
 
   const quickPrompts = [
-    'What is the weather in Shillong today?',
-    'Will it rain in Guwahati this evening?',
+    'How do I manage alerts?',
     'How do I report a hazard?',
-    'How do I use the GIS risk map?',
+    'How do I use the risk map?',
+    'What can I do in this project?',
   ];
 
   const getWebsiteGuidance = (query) => {
     const lowerQuery = query.toLowerCase();
 
     if (lowerQuery.includes('report') || lowerQuery.includes('submit')) {
-      return 'To report a hazard, open Citizen Hazard Reports from the sidebar. Select the hazard type, enter the location and coordinates, describe the situation, optionally upload photo or video evidence, then select Submit Report.';
+      return {
+        text: 'To report a hazard, open Citizen Reports. Select the hazard type, enter the location and coordinates, describe the situation, optionally add photo or video evidence, then submit the report.',
+        action: { label: 'Open Citizen Reports', path: '/reports' },
+      };
     }
     if (lowerQuery.includes('map') || lowerQuery.includes('gis') || lowerQuery.includes('risk zone')) {
-      return 'Open GIS Risk Map from the sidebar. Search by district or state, filter by Critical, High, Medium, or Low risk, then select a map marker and choose Inspect Risk Factors for live rainfall, slope, soil, and weather details.';
+      return {
+        text: 'Open the GIS Risk Map to search by district, state, or location. Use the risk filter to show Critical, High, Medium, or Low areas, then select a marker to inspect rainfall, slope, soil, and weather details.',
+        action: { label: 'Open GIS Risk Map', path: '/risk-map' },
+      };
     }
     if (lowerQuery.includes('alert') || lowerQuery.includes('notification') || lowerQuery.includes('bell')) {
-      return 'Use the notification bell in the top bar to view live alerts. Unread alerts show a red indicator. Select Mark all read to acknowledge every unread alert and close the panel, or open Alert Management for Inspect, Acknowledge, Resolve, and Broadcast actions.';
+      return {
+        text: 'Use the notification bell in the top bar for a quick unread-alert view. For full alert management, open Alerts: filter by severity, inspect an alert, acknowledge it, resolve it, or broadcast an emergency notification to configured contacts.',
+        action: { label: 'Open Alert Management', path: '/alerts' },
+      };
     }
     if (lowerQuery.includes('road') || lowerQuery.includes('highway')) {
-      return 'Open Road Monitoring from the sidebar to view live corridor status, risk level, condition, and the latest API update. Use the search box to find a state or corridor.';
+      return {
+        text: 'Open Road Monitoring to view corridor status, risk level, condition, and the latest update. Search by state, road name, or corridor to find a specific route.',
+        action: { label: 'Open Road Monitoring', path: '/roads' },
+      };
     }
-    if (lowerQuery.includes('analytic') || lowerQuery.includes('predict')) {
-      return 'Open Predictive Analytics to compare live Critical, High, Medium, and Low risk totals by state. The bar chart and regional proportions are calculated from the API dataset.';
+    if (lowerQuery.includes('analytic') || lowerQuery.includes('predict') || lowerQuery.includes('trend')) {
+      return {
+        text: 'Open Predictive Analytics to compare Critical, High, Medium, and Low risk totals by state and review regional proportions and rainfall trends from the API dataset.',
+        action: { label: 'Open Predictive Analytics', path: '/analytics' },
+      };
     }
-    if (lowerQuery.includes('language') || lowerQuery.includes('hindi') || lowerQuery.includes('assam')) {
-      return 'Use the language selector in the top bar to switch between English, Hindi, and Assamese. The selection is saved automatically.';
+    if (lowerQuery.includes('setting') || lowerQuery.includes('language') || lowerQuery.includes('hindi') || lowerQuery.includes('assam')) {
+      return {
+        text: 'Open Settings to switch the interface language between English, Hindi, and Assamese, manage display preferences, and review system options. Your language selection is saved automatically.',
+        action: { label: 'Open Settings', path: '/settings' },
+      };
     }
     if (lowerQuery.includes('live') || lowerQuery.includes('mock') || lowerQuery.includes('data mode')) {
-      return 'Use the Live API and Mock buttons in the top bar. Live API loads the backend and external weather services; Mock uses local demonstration data.';
+      return {
+        text: 'Use the Live API and Mock buttons in the top bar. Live API loads backend and external weather data; Mock uses local demonstration data for testing the interface.',
+        action: { label: 'Open Dashboard', path: '/dashboard' },
+      };
     }
-    if (lowerQuery.includes('what can you') || lowerQuery.includes('help') || lowerQuery.includes('website')) {
-      return 'I can fetch live weather for any place and guide you through hazard reports, the GIS risk map, notifications, alerts, road monitoring, predictive analytics, language selection, and Live API mode.';
+    if (lowerQuery.includes('contact') || lowerQuery.includes('helpline') || lowerQuery.includes('emergency number') || lowerQuery.includes('phone number')) {
+      return {
+        text: 'Open Contact Us for North Eastern Region disaster-management helplines. Use 112 for immediate emergencies, 1078 for the national disaster helpline, 1070 for state emergency coordination, 1077 for district control rooms, or the NDRF control room for rescue support.',
+        action: { label: 'Open Contact Us', path: '/contact' },
+      };
+    }
+    if (lowerQuery.includes('dashboard') || lowerQuery.includes('home') || lowerQuery.includes('overview')) {
+      return {
+        text: 'The Dashboard is your regional overview. It shows current risk totals, critical locations, rainfall, vulnerable roads, and the latest alert feed. Select a metric to inspect the related details.',
+        action: { label: 'Open Dashboard', path: '/dashboard' },
+      };
+    }
+    if (lowerQuery.includes('weather') || lowerQuery.includes('forecast') || lowerQuery.includes('rain')) {
+      return {
+        text: 'Ask me for the weather in any place, such as “weather in Shillong” or “will it rain near Guwahati?”. I will fetch live conditions, temperature, rainfall probability, humidity, wind, and UV information.',
+      };
+    }
+    if (lowerQuery.includes('what can you') || lowerQuery.includes('help') || lowerQuery.includes('website') || lowerQuery.includes('project') || lowerQuery.includes('feature')) {
+      return {
+        text: 'I can guide you through every project area: Dashboard overview, GIS Risk Map, Alert Management, Road Monitoring, Citizen Reports, Predictive Analytics, Settings, language selection, Live API or Mock mode, and live weather lookups. Ask “How do I manage alerts?” or name any feature.',
+      };
     }
 
     return null;
@@ -158,9 +201,10 @@ export default function WeatherAIChatbot() {
         const botResponse = {
           id: Date.now() + 1,
           sender: 'bot',
-          text: guidance,
+          text: guidance.text,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           weatherCard: null,
+          action: guidance.action,
         };
         setMessages((prev) => [...prev, botResponse]);
         setIsTyping(false);
@@ -313,6 +357,20 @@ export default function WeatherAIChatbot() {
                       </div>
                     </div>
                   </div>
+                )}
+
+                {msg.action && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate(msg.action.path);
+                      onClose?.();
+                    }}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                  >
+                    {msg.action.label}
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </button>
                 )}
               </div>
 

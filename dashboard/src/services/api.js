@@ -110,10 +110,20 @@ export const getReports = (isLiveApi) =>
 
 export const getRainfallTrend = (isLiveApi) =>
   fetchWithFallback('/analytics/rainfall-trend', MOCK_RAINFALL_TREND, isLiveApi)
-    .then((data) => asArray(data).map((item) => ({
-      ...item,
-      rainfall: toNumber(item.rainfall ?? item.rainfall_24h_mm),
-    })));
+    .then((data) => {
+      let cumulativeRainfall = 0;
+      return asArray(data).map((item, index) => {
+        const rainfall = toNumber(item.rainfall ?? item.rainfall_24h_mm);
+        cumulativeRainfall += rainfall;
+        return {
+          ...item,
+          time: item.time ?? item.date ?? `${index + 1}`,
+          rainfall,
+          cumulativeRainfall: toNumber(item.cumulativeRainfall, cumulativeRainfall),
+          criticalThreshold: toNumber(item.criticalThreshold, 100),
+        };
+      });
+    });
 
 export const getStateRiskAnalytics = (isLiveApi) =>
   fetchWithFallback('/analytics/state-risk', MOCK_ANALYTICS_STATE_RISK, isLiveApi);

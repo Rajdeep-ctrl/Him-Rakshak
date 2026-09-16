@@ -10,6 +10,7 @@ import {
   FileText,
   BarChart3,
   Settings,
+  PhoneCall,
   LogOut,
   ShieldCheck,
 } from 'lucide-react';
@@ -26,6 +27,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
     { path: '/reports', label: t('reports'), icon: FileText },
     { path: '/analytics', label: t('analytics'), icon: BarChart3 },
     { path: '/settings', label: t('settings'), icon: Settings },
+    { path: '/contact', label: 'Contact Us', icon: PhoneCall },
   ];
 
   const handleLogout = () => {

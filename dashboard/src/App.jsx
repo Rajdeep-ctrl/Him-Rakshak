@@ -17,6 +17,7 @@ import Roads from './pages/Roads';
 import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import ContactUs from './pages/ContactUs';
 
 function Layout({ children, title }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -107,6 +108,15 @@ function AppContent() {
               element={
                 <Layout title={t('systemSettings')}>
                   <Settings />
+                </Layout>
+              }
+            />
+
+            <Route
+              path="/contact"
+              element={
+                <Layout title="Contact Us">
+                  <ContactUs />
                 </Layout>
               }
             />

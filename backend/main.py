@@ -668,7 +668,7 @@ def rainfall_trend(
         get_recent_predictions(db, limit=limit)
     )
 
-    result = []
+    observations = []
 
     for index, item in enumerate(rows):
         rainfall = safe_float(
@@ -676,16 +676,25 @@ def rainfall_trend(
             item.get("rainfall_mm", 0.0),
         )
 
-        result.append(
-            {
-                "date": item.get(
-                    "created_at",
-                    item.get("timestamp", index),
-                ),
-                "rainfall": rainfall,
-                "rainfall_24h_mm": rainfall,
-            }
-        )
+        observations.append({
+            "date": item.get("created_at", item.get("timestamp", index)),
+            "rainfall": rainfall,
+        })
+
+    observations.sort(key=lambda item: str(item["date"]))
+    result = []
+    cumulative_rainfall = 0.0
+
+    for index, item in enumerate(observations):
+        cumulative_rainfall += item["rainfall"]
+        result.append({
+            "date": item["date"],
+            "time": str(item["date"]),
+            "rainfall": item["rainfall"],
+            "rainfall_24h_mm": item["rainfall"],
+            "cumulativeRainfall": round(cumulative_rainfall, 2),
+            "criticalThreshold": 100.0,
+        })
 
     if result:
         return result
@@ -693,16 +702,18 @@ def rainfall_trend(
     data = get_ner_data()
 
     if "rainfall_mm" in data.columns:
+        cumulative_rainfall = 0.0
         for index, row in data.head(limit).iterrows():
+            rainfall = safe_float(row.get("rainfall_mm"))
+            cumulative_rainfall += rainfall
             result.append(
                 {
                     "date": index,
-                    "rainfall": safe_float(
-                        row.get("rainfall_mm")
-                    ),
-                    "rainfall_24h_mm": safe_float(
-                        row.get("rainfall_mm")
-                    ),
+                    "time": str(index),
+                    "rainfall": rainfall,
+                    "rainfall_24h_mm": rainfall,
+                    "cumulativeRainfall": round(cumulative_rainfall, 2),
+                    "criticalThreshold": 100.0,
                 }
             )
 
@@ -864,43 +875,11 @@ def roads():
 
     return roads
 
-<<<<<<< HEAD
-class AlertBroadcastRequest(BaseModel):
-    location: str
-    district: str
-    severity: str
-    description: str = ""
-
-
 class AlertActionRequest(BaseModel):
     alert_id: str
     action: str
     severity: str = "LOW"
     location: Optional[str] = None
-
-
-@app.post("/api/alerts/broadcast-sms")
-def trigger_manual_broadcast(payload: AlertBroadcastRequest):
-    test_contacts = [
-        {"phone": "9596472491", "language_pref": "en", "village_or_zone": payload.location},
-        {"phone": "9876543210", "language_pref": "hi", "village_or_zone": payload.location},
-    ]
-
-    data = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
-    sms_results = broadcast_regional_sms(test_contacts, data)
-
-    # Trigger emergency email dispatch
-    email_subject = f"{payload.severity} Hazard: {payload.location}, {payload.district}"
-    email_body = f"<b>Critical landslide alert:</b><br>Location: {payload.location}, {payload.district}<br>Details: {payload.description}"
-    email_result = send_emergency_email(email_subject, email_body)
-
-    return {
-        "status": "broadcast_complete",
-        "sms_details": sms_results,
-        "email_details": email_result,
-    }
-=======
->>>>>>> 7087000b509551f18c3e62e6b863843f77fcdc76
 
 
 @app.post("/api/alerts/action")

@@ -83,27 +83,24 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-4 lg:p-8 space-y-8 max-w-[1600px] mx-auto">
-      {/* Hazard Submission Form */}
-      <div className="bg-command-surface border border-command-border rounded-xl p-6 shadow-xl">
-        <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-cyan-400" />
-          Field & Citizen Hazard Incident Report
+    <div className="mx-auto max-w-[1600px] space-y-6 p-1 sm:p-2">
+      <div className="rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[var(--shadow-card)]">
+        <h2 className="flex items-center gap-2 text-xl font-black tracking-[0.06em] text-[var(--text)]">
+          <FileText className="h-5 w-5 text-[var(--accent)]" />
+          Field & Citizen Hazard Report
         </h2>
-        <p className="text-xs text-command-muted mb-6">
+        <p className="mt-2 text-xs font-medium text-[var(--muted)]">
           Submit ground-level observations to enrich AI prediction models and emergency dispatch
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Hazard Type
-              </label>
+              <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Hazard Type</label>
               <select
                 value={hazardType}
                 onChange={(e) => setHazardType(e.target.value)}
-                className="w-full bg-command-bg border border-command-border rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full rounded-2xl border border-[var(--border)] bg-[var(--panel-alt)] px-3 py-2.5 text-sm text-[var(--text)]"
               >
                 <option value="Landslide">Landslide / Slope Failure</option>
                 <option value="Road Blockage">Road Blockage / Debris Flow</option>
@@ -113,72 +110,68 @@ export default function Reports() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Location Landmark / Address
-              </label>
+              <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Location Landmark / Address</label>
               <input
                 type="text"
                 required
                 placeholder="e.g., Haflong Hill Highway km-42"
                 value={locationName}
                 onChange={(e) => setLocationName(e.target.value)}
-                className="w-full bg-command-bg border border-command-border rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full rounded-2xl border border-[var(--border)] bg-[var(--panel-alt)] px-3 py-2.5 text-sm text-[var(--text)]"
               />
             </div>
           </div>
 
-          {/* Coordinates & Geolocation */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div className="grid items-end gap-4 md:grid-cols-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Latitude</label>
+              <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Latitude</label>
               <input
                 type="text"
                 placeholder="25.1711"
                 value={latitude}
                 onChange={(e) => setLatitude(e.target.value)}
-                className="w-full bg-command-bg border border-command-border rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full rounded-2xl border border-[var(--border)] bg-[var(--panel-alt)] px-3 py-2.5 text-sm text-[var(--text)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Longitude</label>
+              <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Longitude</label>
               <input
                 type="text"
                 placeholder="93.0158"
                 value={longitude}
                 onChange={(e) => setLongitude(e.target.value)}
-                className="w-full bg-command-bg border border-command-border rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                className="w-full rounded-2xl border border-[var(--border)] bg-[var(--panel-alt)] px-3 py-2.5 text-sm text-[var(--text)]"
               />
             </div>
 
             <button
               type="button"
               onClick={handleAcquireLocation}
-              className="bg-command-card hover:bg-slate-700 border border-command-border text-cyan-400 text-xs font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 h-[38px]"
+              className="flex h-[46px] items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--panel-alt)] px-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--accent)] transition hover:border-[var(--accent)]/20"
             >
-              <MapPin className="w-4 h-4" />
-              Acquire Geolocation
+              <MapPin className="h-4 w-4" />
+              Geo Locate
             </button>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Description</label>
+            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Description</label>
             <textarea
               rows={3}
               required
               placeholder="Describe scale of slide, movement velocity, affected infrastructure..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-command-bg border border-command-border rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+              className="w-full rounded-2xl border border-[var(--border)] bg-[var(--panel-alt)] p-3 text-sm text-[var(--text)]"
             ></textarea>
           </div>
 
-          {/* Media Drag and Drop Previews */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border-2 border-dashed border-command-border p-4 rounded-xl text-center bg-command-bg/50">
-              <ImageIcon className="w-6 h-6 text-command-muted mx-auto mb-1" />
-              <label className="cursor-pointer text-xs font-semibold text-cyan-400 hover:underline">
-                Upload Photo Evidence
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-[22px] border-2 border-dashed border-[var(--border)] bg-[var(--panel-alt)] p-4 text-center">
+              <ImageIcon className="mx-auto mb-2 h-6 w-6 text-[var(--muted)]" />
+              <label className="cursor-pointer text-xs font-bold uppercase tracking-[0.12em] text-[var(--accent)]">
+                Upload Photo
                 <input
                   type="file"
                   accept="image/*"
@@ -186,13 +179,13 @@ export default function Reports() {
                   className="hidden"
                 />
               </label>
-              {photo && <p className="text-[11px] text-emerald-400 mt-1 font-semibold">{photo.name}</p>}
+              {photo && <p className="mt-2 text-[11px] font-semibold text-[var(--success)]">{photo.name}</p>}
             </div>
 
-            <div className="border-2 border-dashed border-command-border p-4 rounded-xl text-center bg-command-bg/50">
-              <Video className="w-6 h-6 text-command-muted mx-auto mb-1" />
-              <label className="cursor-pointer text-xs font-semibold text-cyan-400 hover:underline">
-                Upload Video Footage
+            <div className="rounded-[22px] border-2 border-dashed border-[var(--border)] bg-[var(--panel-alt)] p-4 text-center">
+              <Video className="mx-auto mb-2 h-6 w-6 text-[var(--muted)]" />
+              <label className="cursor-pointer text-xs font-bold uppercase tracking-[0.12em] text-[var(--accent)]">
+                Upload Video
                 <input
                   type="file"
                   accept="video/*"
@@ -200,30 +193,29 @@ export default function Reports() {
                   className="hidden"
                 />
               </label>
-              {video && <p className="text-[11px] text-emerald-400 mt-1 font-semibold">{video.name}</p>}
+              {video && <p className="mt-2 text-[11px] font-semibold text-[var(--success)]">{video.name}</p>}
             </div>
           </div>
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded-lg text-xs shadow-lg transition-colors flex items-center justify-center gap-2"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:bg-[var(--accent-2)]"
           >
             {submitting ? (
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
             ) : (
               <>
-                <Upload className="w-4 h-4" />
-                Submit Hazard Report to Command Center
+                <Upload className="h-4 w-4" />
+                Submit Report
               </>
             )}
           </button>
         </form>
       </div>
 
-      {/* Reports History */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-white">Recent Submitted Field Reports</h3>
+        <h3 className="text-xl font-black tracking-[0.06em] text-[var(--text)]">Recent Submitted Field Reports</h3>
         {loading ? (
           <SkeletonLoader type="table" count={2} />
         ) : (
@@ -231,25 +223,19 @@ export default function Reports() {
             {reports.map((rep) => (
               <div
                 key={rep.id}
-                className="bg-command-surface p-4 rounded-xl border border-command-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                className="flex flex-col items-start justify-between gap-3 rounded-[22px] border border-[var(--border)] bg-[var(--panel)] p-4 shadow-[var(--shadow-card)] md:flex-row md:items-center"
               >
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="rounded-full border border-[var(--accent)]/20 bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--accent)]">
                       {rep.hazardType}
                     </span>
-                    <span className="text-xs font-bold text-slate-200">{rep.id}</span>
-                    <span className="text-[10px] text-command-muted">• {rep.timestamp}</span>
+                    <span className="text-[11px] font-bold text-[var(--muted)]">{rep.status}</span>
                   </div>
-                  <p className="text-xs font-bold text-white">{rep.locationName}</p>
-                  <p className="text-xs text-command-muted mt-0.5">{rep.description}</p>
+                  <p className="text-sm font-bold text-[var(--text)]">{rep.locationName}</p>
+                  <p className="text-xs text-[var(--muted)]">{rep.timestamp}</p>
                 </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="px-2.5 py-1 rounded text-xs font-semibold bg-emerald-950/40 border border-emerald-500/30 text-emerald-400">
-                    {rep.status}
-                  </span>
-                </div>
+                <p className="text-xs text-[var(--muted)]">{rep.description}</p>
               </div>
             ))}
           </div>

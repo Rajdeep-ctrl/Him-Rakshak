@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import { DataModeProvider } from './context/DataModeContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Sidebar from './components/layout/Sidebar';
 import Topbar from './components/layout/Topbar';
 import Toast from './components/common/Toast';
@@ -22,15 +23,15 @@ function Layout({ children, title }) {
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex">
+    <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text)] flex antialiased">
       <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
-      <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
-        <Topbar 
-          title={title} 
-          setMobileOpen={setMobileOpen} 
-          onOpenVoice={() => setIsVoiceOpen(true)} 
+      <div className="flex-1 lg:pl-72 flex flex-col min-w-0">
+        <Topbar
+          title={title}
+          setMobileOpen={setMobileOpen}
+          onOpenVoice={() => setIsVoiceOpen(true)}
         />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 px-3 pb-6 pt-4 sm:px-4 lg:px-6">{children}</main>
       </div>
       <Toast />
       <VoiceAssistantModal isOpen={isVoiceOpen} onClose={() => setIsVoiceOpen(false)} />
@@ -40,10 +41,11 @@ function Layout({ children, title }) {
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <DataModeProvider>
-        <BrowserRouter>
-          <Routes>
+    <ThemeProvider>
+      <LanguageProvider>
+        <DataModeProvider>
+          <BrowserRouter>
+            <Routes>
             <Route path="/login" element={<Login />} />
 
             <Route
@@ -110,9 +112,10 @@ export default function App() {
             />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </DataModeProvider>
-    </LanguageProvider>
+            </Routes>
+          </BrowserRouter>
+        </DataModeProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }

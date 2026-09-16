@@ -48,23 +48,23 @@ export default function WeatherStatsGrid() {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {stats.map((stat, idx) => {
         const IconComponent = stat.icon;
         return (
           <div
             key={idx}
-            className="bg-command-surface/80 border border-command-border rounded-xl p-4 flex flex-col justify-between hover:border-cyan-500/40 transition-colors"
+            className="flex min-h-[140px] flex-col justify-between rounded-[24px] border border-[var(--border)] bg-[var(--panel)] p-4 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5"
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-command-muted uppercase tracking-wider">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">
                 {stat.title}
               </span>
-              <IconComponent className={`w-5 h-5 ${stat.color}`} />
+              <IconComponent className={`h-5 w-5 ${stat.color}`} />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-100">{stat.value}</p>
-              <p className="text-xs text-command-muted mt-1">{stat.status}</p>
+              <p className="text-2xl font-black text-[var(--text)]">{stat.value}</p>
+              <p className="mt-2 text-xs font-medium text-[var(--muted)]">{stat.status}</p>
             </div>
           </div>
         );

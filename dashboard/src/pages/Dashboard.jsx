@@ -145,186 +145,166 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-[1600px] mx-auto bg-emerald-50/30 min-h-screen text-slate-800 font-sans">
+    <div className="mx-auto max-w-[1600px] space-y-6 p-1 sm:p-2">
       <DosAndDontsModal />
 
-      {/* Top Interactive Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Critical Risk Card */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div
           onClick={() => handleCardClick('critical')}
-          className="bg-white p-5 rounded-2xl border border-red-200 shadow-sm hover:shadow-md hover:border-red-400 cursor-pointer transition-all relative overflow-hidden group"
+          className="group cursor-pointer overflow-hidden rounded-[26px] border border-[var(--danger)]/15 bg-[var(--panel)] p-5 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5"
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">Critical Risk Zones</p>
-              <h3 className="text-3xl font-extrabold text-red-600 mt-2">{criticalLocations.length || 2}</h3>
-              <p className="text-[11px] text-red-600 font-medium mt-1 flex items-center gap-1">
-                <ArrowUpRight className="w-3 h-3" /> +2 elevated in last 6 hrs
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">Critical Risk Zones</p>
+              <h3 className="mt-3 text-3xl font-black text-[var(--danger)]">{criticalLocations.length || 2}</h3>
+              <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-[var(--danger)]">
+                <ArrowUpRight className="h-3 w-3" /> +2 elevated in last 6 hrs
               </p>
             </div>
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 group-hover:scale-105 transition-transform">
-              <AlertTriangle className="w-6 h-6" />
+            <div className="rounded-2xl border border-[var(--danger)]/20 bg-[var(--danger-soft)] p-3 text-[var(--danger)] transition group-hover:scale-105">
+              <AlertTriangle className="h-6 w-6" />
             </div>
           </div>
-          <p className="text-[10px] text-slate-400 mt-3 font-medium">Click to inspect locations →</p>
+          <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">Inspect locations →</p>
         </div>
 
-        {/* High Risk Card */}
         <div
           onClick={() => handleCardClick('high')}
-          className="bg-white p-5 rounded-2xl border border-orange-200 shadow-sm hover:shadow-md hover:border-orange-400 cursor-pointer transition-all group"
+          className="group cursor-pointer overflow-hidden rounded-[26px] border border-[var(--warning)]/15 bg-[var(--panel)] p-5 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5"
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">High Risk Zones</p>
-              <h3 className="text-3xl font-extrabold text-orange-600 mt-2">{highLocations.length || 5}</h3>
-              <p className="text-[11px] text-orange-600 font-medium mt-1">Sustained moisture build-up</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">High Risk Zones</p>
+              <h3 className="mt-3 text-3xl font-black text-[var(--warning)]">{highLocations.length || 5}</h3>
+              <p className="mt-2 text-[11px] font-semibold text-[var(--warning)]">Sustained moisture build-up</p>
             </div>
-            <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl text-orange-600 group-hover:scale-105 transition-transform">
-              <ShieldAlert className="w-6 h-6" />
+            <div className="rounded-2xl border border-[var(--warning)]/20 bg-[var(--warning-soft)] p-3 text-[var(--warning)] transition group-hover:scale-105">
+              <ShieldAlert className="h-6 w-6" />
             </div>
           </div>
-          <p className="text-[10px] text-slate-400 mt-3 font-medium">Click to view zones →</p>
+          <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">View zones →</p>
         </div>
 
-        {/* 24h Max Rainfall Card */}
         <div
           onClick={() => handleCardClick('rainfall')}
-          className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-sm hover:shadow-md hover:border-emerald-400 cursor-pointer transition-all group"
+          className="group cursor-pointer overflow-hidden rounded-[26px] border border-[var(--success)]/15 bg-[var(--panel)] p-5 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5"
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">24h Max Rainfall</p>
-              <h3 className="text-3xl font-extrabold text-emerald-700 mt-2">
-                168 <span className="text-base font-semibold">mm</span>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">24h Max Rainfall</p>
+              <h3 className="mt-3 text-3xl font-black text-[var(--accent)]">
+                168 <span className="text-base font-bold">mm</span>
               </h3>
-              <p className="text-[11px] text-emerald-600 font-medium mt-1">Dima Hasao Sector</p>
+              <p className="mt-2 text-[11px] font-semibold text-[var(--success)]">Dima Hasao Sector</p>
             </div>
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-600 group-hover:scale-105 transition-transform">
-              <CloudRain className="w-6 h-6" />
+            <div className="rounded-2xl border border-[var(--success)]/20 bg-[var(--success-soft)] p-3 text-[var(--success)] transition group-hover:scale-105">
+              <CloudRain className="h-6 w-6" />
             </div>
           </div>
-          <p className="text-[10px] text-slate-400 mt-3 font-medium">Click for station data →</p>
+          <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">Station data →</p>
         </div>
 
-        {/* Vulnerable Roads Card */}
         <div
           onClick={() => handleCardClick('roads')}
-          className="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm hover:shadow-md hover:border-amber-400 cursor-pointer transition-all group"
+          className="group cursor-pointer overflow-hidden rounded-[26px] border border-[var(--amber)]/15 bg-[var(--panel)] p-5 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5"
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">Vulnerable Roads</p>
-              <h3 className="text-3xl font-extrabold text-amber-600 mt-2">3 Stretches</h3>
-              <p className="text-[11px] text-amber-600 font-medium mt-1">NH-27 & NH-29 Blocked</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--muted)]">Vulnerable Roads</p>
+              <h3 className="mt-3 text-3xl font-black text-[var(--amber)]">3 Stretches</h3>
+              <p className="mt-2 text-[11px] font-semibold text-[var(--amber)]">NH-27 & NH-29 Blocked</p>
             </div>
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-600 group-hover:scale-105 transition-transform">
-              <Truck className="w-6 h-6" />
+            <div className="rounded-2xl border border-[var(--amber)]/20 bg-[var(--amber-soft)] p-3 text-[var(--amber)] transition group-hover:scale-105">
+              <Truck className="h-6 w-6" />
             </div>
           </div>
-          <p className="text-[10px] text-slate-400 mt-3 font-medium">Click for status breakdown →</p>
+          <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">Status breakdown →</p>
         </div>
-
       </div>
 
-      {/* Live Weather Metrics Grid */}
       <div className="space-y-3">
-        <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-          <CloudRain className="w-4 h-4 text-emerald-600" />
+        <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.14em] text-[var(--text)]">
+          <CloudRain className="h-4 w-4 text-[var(--success)]" />
           Live Weather & Environmental Statistics
         </h2>
         <WeatherStatsGrid />
       </div>
 
-      {/* Main Map + Side Alerts Overview Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* GIS Map Command Center */}
-        <div className="lg:col-span-2 bg-white border border-emerald-100 rounded-2xl p-4 flex flex-col h-[600px] shadow-sm">
-          <div className="flex items-center justify-between mb-3 px-2">
-            <div>
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-600" />
-                Live GIS Landslide Risk Surveillance
-              </h2>
-              <p className="text-xs text-slate-500 font-medium">North Eastern Region Command View</p>
-            </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="flex h-[600px] flex-col rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-4 shadow-[var(--shadow-card)] lg:col-span-2">
+          <div className="mb-3 px-2">
+            <h2 className="flex items-center gap-2 text-base font-black tracking-[0.06em] text-[var(--text)]">
+              <Activity className="h-4 w-4 text-[var(--success)]" />
+              Live GIS Landslide Risk Surveillance
+            </h2>
+            <p className="mt-1 text-xs font-medium text-[var(--muted)]">North Eastern Region Command View</p>
           </div>
-          <div className="flex-1 rounded-xl overflow-hidden border border-slate-200">
+          <div className="flex-1 overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--panel-alt)]">
             <LandslideMap locations={locations} />
           </div>
         </div>
 
-        {/* Live Incident Alert Queue & Self Protection */}
-        <div className="space-y-4 flex flex-col justify-between">
-          
-          <div className="bg-white border border-emerald-100 rounded-2xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-red-600" />
+        <div className="flex flex-col justify-between gap-4">
+          <div className="rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-5 shadow-[var(--shadow-card)]">
+            <div className="mb-4 flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.14em] text-[var(--text)]">
+                <ShieldAlert className="h-4 w-4 text-[var(--danger)]" />
                 Critical Alerts Feed
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+              <span className="rounded-full border border-[var(--danger)]/20 bg-[var(--danger-soft)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[var(--danger)]">
                 {criticalAlerts.length} Active
               </span>
             </div>
 
-            <div className="space-y-3 overflow-y-auto max-h-[300px] pr-1">
+            <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
               {criticalAlerts.length > 0 ? (
                 criticalAlerts.map((alt) => (
                   <div
                     key={alt.id}
-                    className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-emerald-300 transition-colors space-y-1"
+                    className="space-y-1 rounded-[18px] border border-[var(--border)] bg-[var(--panel-alt)] p-3.5 transition hover:border-[var(--accent)]/20"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-red-600">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-black uppercase tracking-[0.12em] text-[var(--danger)]">
                         {alt.district || alt.location || 'Assam Sector'}, {alt.state || 'NER'}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-medium">{alt.timestamp || alt.time || 'Just now'}</span>
+                      <span className="text-[10px] font-medium text-[var(--muted)]">{alt.timestamp || alt.time || 'Just now'}</span>
                     </div>
-                    <h4 className="text-xs font-semibold text-slate-800">{alt.title}</h4>
-                    <p className="text-[11px] text-slate-500 line-clamp-2">{alt.description || alt.summary}</p>
+                    <h4 className="text-xs font-bold text-[var(--text)]">{alt.title}</h4>
+                    <p className="text-[11px] leading-5 text-[var(--muted)]">{alt.description || alt.summary}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-slate-400 text-center py-6 font-medium">No active critical alerts.</p>
+                <p className="py-6 text-center text-xs font-medium text-[var(--muted)]">No active critical alerts.</p>
               )}
             </div>
 
             <button
               onClick={() => window.location.href = '/alerts'}
-              className="w-full mt-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold py-2.5 rounded-xl border border-emerald-200 transition-colors flex items-center justify-center gap-1.5"
+              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-[var(--success)]/20 bg-[var(--success-soft)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--success)] transition hover:border-[var(--success)]/30"
             >
-              <span>View Full Alert Management Center</span>
-              <ChevronRight className="w-4 h-4" />
+              <span>Alert management center</span>
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          {/* How to Protect Yourself / Safety Guidance */}
-          <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 shadow-sm space-y-2">
-            <h3 className="text-xs font-bold text-emerald-900 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-700" /> Community Emergency Protocol
+          <div className="rounded-[28px] border border-[var(--success)]/20 bg-[var(--success-soft)] p-4 shadow-[var(--shadow-card)]">
+            <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--success)]">
+              <ShieldCheck className="h-4 w-4" /> Community Emergency Protocol
             </h3>
-            <p className="text-[11px] text-emerald-800 leading-relaxed font-medium">
-              If operating in critical risk areas (e.g. Dima Hasao, Haflong, or Shillong Pass), maintain emergency contact with NDRF/SDMA controls at <strong>1070</strong>. Avoid slope cuts and steep stream banks.
+            <p className="mt-2 text-[11px] leading-5 text-[var(--text)]">
+              If operating in critical risk areas, maintain emergency contact with NDRF/SDMA controls at <strong>1070</strong>. Avoid slope cuts and steep stream banks.
             </p>
           </div>
-
         </div>
       </div>
 
-      {/* Rainfall Trend Analytics Chart */}
-      <div className="bg-white border border-emerald-100 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-              Regional 24-Hour Rainfall Trend vs Critical Risk Threshold
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">Cumulative precipitation data across high-risk sectors</p>
-          </div>
+      <div className="rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-5 shadow-[var(--shadow-card)]">
+        <div className="mb-4">
+          <h3 className="flex items-center gap-2 text-base font-black tracking-[0.06em] text-[var(--text)]">
+            <TrendingUp className="h-4 w-4 text-[var(--success)]" />
+            Regional 24-Hour Rainfall Trend vs Critical Risk Threshold
+          </h3>
+          <p className="mt-1 text-xs font-medium text-[var(--muted)]">Cumulative precipitation data across high-risk sectors</p>
         </div>
 
         <div className="h-64 w-full">
@@ -332,19 +312,19 @@ export default function Dashboard() {
             <AreaChart data={rainfallData}>
               <defs>
                 <linearGradient id="colorRain" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#2c5c4d" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#2c5c4d" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="time" stroke="#64748B" fontSize={12} />
-              <YAxis stroke="#64748B" fontSize={12} unit="mm" />
+              <XAxis dataKey="time" stroke="#726961" fontSize={12} />
+              <YAxis stroke="#726961" fontSize={12} unit="mm" />
               <Tooltip
-                contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', color: '#0F172A', borderRadius: '0.75rem', fontSize: '12px' }}
+                contentStyle={{ backgroundColor: '#fffdf9', borderColor: '#e4ddd3', borderRadius: '14px', color: '#201d1a', fontSize: '12px' }}
               />
               <Area
                 type="monotone"
                 dataKey="rainfall"
-                stroke="#10B981"
+                stroke="#2c5c4d"
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#colorRain)"
@@ -354,27 +334,26 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Interactive KPI Inspection Modal */}
       {activeKpiModal && (
-        <div className="fixed inset-0 z-[2000] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 border border-emerald-100 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Info className="w-4 h-4 text-emerald-600" /> {activeKpiModal.title}
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#201d1a]/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md space-y-4 rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[var(--shadow-soft)]">
+            <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--text)]">
+                <Info className="h-4 w-4 text-[var(--success)]" /> {activeKpiModal.title}
               </h3>
-              <button onClick={() => setActiveKpiModal(null)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
+              <button onClick={() => setActiveKpiModal(null)} className="text-[var(--muted)] hover:text-[var(--text)]">
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+            <div className="max-h-60 space-y-2.5 overflow-y-auto pr-1">
               {activeKpiModal.items.map((item, index) => (
-                <div key={index} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center text-xs">
+                <div key={index} className="flex items-center justify-between rounded-[18px] border border-[var(--border)] bg-[var(--panel-alt)] p-3 text-xs">
                   <div>
-                    <span className="font-bold text-slate-800 block">{item.name || item.district}</span>
-                    <span className="text-[10px] text-slate-500">{item.state}</span>
+                    <span className="block font-black text-[var(--text)]">{item.name || item.district}</span>
+                    <span className="text-[10px] text-[var(--muted)]">{item.state}</span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold">
+                  <span className="rounded-xl bg-[var(--success-soft)] px-2.5 py-1 font-black text-[var(--success)]">
                     {item.value || item.riskLevel}
                   </span>
                 </div>
@@ -383,14 +362,13 @@ export default function Dashboard() {
 
             <button
               onClick={() => setActiveKpiModal(null)}
-              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors"
+              className="w-full rounded-2xl bg-[var(--accent)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:bg-[var(--accent-2)]"
             >
               Close Window
             </button>
           </div>
         </div>
       )}
-
     </div>
   );
 }

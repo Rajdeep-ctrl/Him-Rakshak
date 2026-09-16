@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-for folder in ("api", "data", "database", "ml_model"):
+for folder in ("backend", "api", "data", "database", "ml_model"):
     path = os.path.join(ROOT_DIR, folder)
     if path not in sys.path:
         sys.path.insert(0, path)

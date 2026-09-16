@@ -48,40 +48,38 @@ export default function Analytics() {
   if (loading) return <div className="p-8"><SkeletonLoader type="card" count={2} /></div>;
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
-      <div className="bg-command-surface p-6 rounded-xl border border-command-border">
-        <h1 className="text-xl font-bold text-white flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-cyan-400" />
+    <div className="mx-auto max-w-[1600px] space-y-6 p-1 sm:p-2">
+      <div className="rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[var(--shadow-card)]">
+        <h1 className="flex items-center gap-2 text-xl font-black tracking-[0.06em] text-[var(--text)]">
+          <BarChart3 className="h-5 w-5 text-[var(--accent)]" />
           North Eastern Regional Landslide Risk Analytics
         </h1>
-        <p className="text-xs text-command-muted mt-1">
+        <p className="mt-2 text-xs font-medium text-[var(--muted)]">
           State-level risk distribution, historical density, and predictive metrics
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* State-wise Breakdown Bar Chart */}
-        <div className="bg-command-surface p-5 rounded-xl border border-command-border">
-          <h3 className="text-sm font-bold text-white mb-4">State-wise Risk Severity Breakdown</h3>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-5 shadow-[var(--shadow-card)]">
+          <h3 className="mb-4 text-sm font-black uppercase tracking-[0.14em] text-[var(--text)]">State-wise Risk Severity</h3>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data}>
-                <XAxis dataKey="state" stroke="#8A99AD" fontSize={11} />
-                <YAxis stroke="#8A99AD" fontSize={11} />
-                <Tooltip contentStyle={{ backgroundColor: '#1A2333', borderColor: '#2A364F' }} />
+                <XAxis dataKey="state" stroke="#726961" fontSize={11} />
+                <YAxis stroke="#726961" fontSize={11} />
+                <Tooltip contentStyle={{ backgroundColor: '#fffdf9', borderColor: '#e4ddd3', borderRadius: '14px', color: '#201d1a' }} />
                 <Legend />
-                <Bar dataKey="critical" fill="#EF4444" name="Critical" />
-                <Bar dataKey="high" fill="#F97316" name="High" />
-                <Bar dataKey="medium" fill="#F59E0B" name="Medium" />
-                <Bar dataKey="low" fill="#10B981" name="Low" />
+                <Bar dataKey="critical" fill="#b84a36" name="Critical" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="high" fill="#d47548" name="High" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="medium" fill="#c5872f" name="Medium" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="low" fill="#2c5c4d" name="Low" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Overall Risk Distribution Donut */}
-        <div className="bg-command-surface p-5 rounded-xl border border-command-border">
-          <h3 className="text-sm font-bold text-white mb-4">Regional Risk Proportions</h3>
+        <div className="rounded-[28px] border border-[var(--border)] bg-[var(--panel)] p-5 shadow-[var(--shadow-card)]">
+          <h3 className="mb-4 text-sm font-black uppercase tracking-[0.14em] text-[var(--text)]">Regional Risk Proportions</h3>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -98,7 +96,7 @@ export default function Analytics() {
                     <Cell key={`cell-${index}`} fill={RISK_COLORS[index % RISK_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#1A2333', borderColor: '#2A364F' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#fffdf9', borderColor: '#e4ddd3', borderRadius: '14px', color: '#201d1a' }} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>

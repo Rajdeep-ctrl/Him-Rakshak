@@ -52,52 +52,48 @@ export default function RiskMapPage() {
   });
 
   return (
-    <div className="p-4 space-y-4 h-[calc(100vh-80px)] flex flex-col bg-slate-950">
-      {/* Top Action Bar with Search & Filter Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 p-3 rounded-xl border border-slate-800">
+    <div className="flex h-[calc(100vh-88px)] flex-col gap-4 p-1 sm:p-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[var(--border)] bg-[var(--panel)] p-4 shadow-[var(--shadow-card)]">
         <div>
-          <h1 className="text-base font-bold text-white">GIS Landslide Surveillance Map</h1>
-          <p className="text-xs text-slate-400">Search and filter active risk sectors across NER</p>
+          <h1 className="text-lg font-black tracking-[0.06em] text-[var(--text)]">GIS Surveillance Map</h1>
+          <p className="mt-1 text-xs font-medium text-[var(--muted)]">Search and filter active risk sectors across the North East region</p>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* SEARCH BAR */}
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
             <input
               type="text"
               placeholder="Search district, state, location..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-1.5 bg-slate-800 text-white text-xs rounded-lg border border-slate-700 focus:outline-none focus:border-cyan-500 w-64"
+              className="w-64 rounded-2xl border border-[var(--border)] bg-[var(--panel-alt)] py-2.5 pl-9 pr-4 text-xs text-[var(--text)]"
             />
           </div>
 
-          {/* RISK FILTER */}
-          <div className="flex items-center gap-1.5 bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs">
-            <Filter className="w-3.5 h-3.5 text-slate-400 ml-1" />
+          <div className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--panel-alt)] px-3 py-2 text-xs font-semibold text-[var(--text)]">
+            <Filter className="h-3.5 w-3.5 text-[var(--muted)]" />
             <select
               value={filterRisk}
               onChange={(e) => setFilterRisk(e.target.value)}
-              className="bg-transparent text-white focus:outline-none cursor-pointer pr-2"
+              className="cursor-pointer bg-transparent pr-1 text-[var(--text)] focus:outline-none"
             >
-              <option value="ALL" className="bg-slate-900">All Risks</option>
-              <option value="CRITICAL" className="bg-slate-900">Critical</option>
-              <option value="HIGH" className="bg-slate-900">High</option>
-              <option value="MEDIUM" className="bg-slate-900">Medium</option>
-              <option value="LOW" className="bg-slate-900">Low</option>
+              <option value="ALL">All Risks</option>
+              <option value="CRITICAL">Critical</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* MAP CONTAINER */}
-      <div className="relative flex-1 rounded-xl overflow-hidden border border-slate-800">
+      <div className="relative flex-1 overflow-hidden rounded-[28px] border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-card)]">
         {loading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
-            <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Updating Map Layers...</span>
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-[rgba(245,241,234,0.72)] backdrop-blur-[1px]">
+            <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--panel)] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Updating map layers</span>
             </div>
           </div>
         )}
